@@ -22,4 +22,6 @@ if __name__ == '__main__':
     curl_response = r.get()
     print curl_response
     
+    print '[RESPONSE times=%s]' % curl_response.times()
+    
     serv = service.TestService()

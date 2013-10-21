@@ -105,6 +105,9 @@ class Response(object):
     def header(self):
         return self.__header
     
+    def times(self):
+        return self.__time
+    
     def status(self):
         return self.__status    
     
