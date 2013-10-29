@@ -1,1 +1,10 @@
+nbproject
+
+# Block Python compiled files
 *.pyc
+
+# Block dot files
+.*
+
+# Block vim files
+~*
