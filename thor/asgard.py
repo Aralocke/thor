@@ -1,10 +1,14 @@
 from thor.common import service
 
+__SERVICE_STATION__ = 'master'
+__SERVICE_NODE__    = 'node'
+__SERVICE_SLAVE__   = 'slave'
+
 class Asgard(service.Service):
     
     __REALM_NAME = 'Asgard'
     
-    def __init__(self, config, name = None, master = False):
+    def __init__(self, config, name = None, type = __SERVICE_SLAVE__):
         # Call the parent class which will setup all off the thread
         # controls which we'll use later
         service.Service.__init__(self, config)
@@ -12,7 +16,7 @@ class Asgard(service.Service):
         # We automatically insitalize ourselves NOT as a master
         # but assume we will automatically be a slave process that
         # connects to a master server
-        self.master = master
+        self.type = type
         
         print 'Asgard'
     

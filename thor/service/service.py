@@ -4,7 +4,6 @@
 #from threading import current_thread
 from threading import Event
 from threading import RLock
-from threading import Thread
 from threading import ThreadError
 
 # Service headers
@@ -19,7 +18,7 @@ __S_ERROR__ = 3
 
 class Service(object):  
     
-    def __init__(self, config, delay = 1, num_threads = 1):
+    def __init__(self, config = None, delay = 1, num_threads = 1):
         # We first need to instantiate a lock object that will be used 
         # to synchronize all of the properties for this service 
         self.__lock = RLock()  

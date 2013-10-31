@@ -9,7 +9,7 @@ if os.path.exists(os.path.join(possible_topdir, 'thor', '__init__.py')):
     sys.path.insert(0, possible_topdir)
 
 from thor import config
-from thor import realm
+from thor import service
 from thor.common import environment
 
 def execute(*servers):
@@ -23,9 +23,9 @@ def execute(*servers):
         server.wait()
 
 # Initialization method to setup the asgard class
-def make_service(config, name, host = '127.0.0.1', port = 21189, master = False):
+def make_service(config, name, host = '127.0.0.1', port = 21189, type = None):
     # Initialize the Asgard application service
-    app = realm.Asgard(config, name=name, master=master)
+    app = service.Asgard(config, name=name, type=type)
     # Pass the Asgard application to a server which handles the socket i/o 
     # between the processes
     server = environment.Server(app, host, port) 
