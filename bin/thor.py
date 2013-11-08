@@ -1,5 +1,4 @@
 import os
-import signal
 import sys
 
 absolute_path = os.path.abspath(__file__)
@@ -13,29 +12,28 @@ from thor import service
 from thor.common import environment
 
 def execute(*servers):
-    # Signal handler to handle the interrupt event
-    signal.signal(signal.SIGINT, sigint_handler)
     
+    # Fire off the startup events for the specific server
     for server in servers:
-        server.start()
+        server.handle_start()
+    
+    # Now we are going to tell the apps to load the servers into their own 
+    # systhread and then execute the server's async loop
+    for server in servers:
+        app = server.application
+        app.execute()
         
-    for server in servers:
-        server.wait()
-
+    print 'Service initiated (PID=%s)' % (os.getpid())        
+    
 # Initialization method to setup the asgard class
 def make_service(config, name, host = '127.0.0.1', port = 21189, type = None):
     # Initialize the Asgard application service
     app = service.Asgard(config, name=name, type=type)
     # Pass the Asgard application to a server which handles the socket i/o 
     # between the processes
-    server = environment.Server(app, host, port) 
+    server = environment.Server(app, host=host, port=port) 
     # Return the completed server object
     return server
-
-def sigint_handler(signal, frame):
-    # When we recieve the interrupt signal, exit out and
-    # get outta dodge
-    sys.exit(0)
 
 if __name__ == '__main__':
     config.main()

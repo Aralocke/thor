@@ -1,14 +1,13 @@
-from thor.common import service
+from threading import Thread
+from thor.service import service
 
 __SERVICE_STATION__ = 'master'
 __SERVICE_NODE__    = 'node'
 __SERVICE_SLAVE__   = 'slave'
 
 class Asgard(service.Service):
-    
-    __REALM_NAME = 'Asgard'
-    
-    def __init__(self, config, name = None, type = __SERVICE_SLAVE__):
+   
+    def __init__(self, config, name = None, type = __SERVICE_SLAVE__):        
         # Call the parent class which will setup all off the thread
         # controls which we'll use later
         service.Service.__init__(self, config)
@@ -18,10 +17,24 @@ class Asgard(service.Service):
         # connects to a master server
         self.type = type
         
+        self.__server = None
+        
         print 'Asgard'
     
     def __str__(self):
-        return '[REALM type=%s master=%s]' % (Asgard.__REALM_NAME, self.master)  
+        return '[ASGARD type=%s uid=%s]' % (self.type, self.get_uid()) 
+    
+    def execute(self):
+        print 'Asgard execution'
+        n_thread = Thread(target=self.__server.run)
+        n_thread.setDaemon(True)
+        n_thread.start()
+        
+        super(Asgard, self).execute()
+        
+    
+    def get_server(self):
+        return self.__server
     
     # Push an update to the master 
     # As a slave we only care about this in to alert the other crawlers
@@ -34,3 +47,8 @@ class Asgard(service.Service):
     # the master
     def pull(self):
         pass
+    
+    def set_server(self, server):
+        self.__server = server
+    
+    server = property(get_server, set_server)
