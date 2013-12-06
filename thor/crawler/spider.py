@@ -3,7 +3,7 @@ import urllib2
 import urlparse
 import BeautifulSoup
 
-class Crawler(object):
+class Spider(object):
     def __init__(self, base_url):
         self.base_url = base_url
         

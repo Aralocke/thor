@@ -1,0 +1,369 @@
+
+[12:12:57 PM] __main__ INFO -- Application started on pid 5788
+[12:12:57 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:12:57 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:12:57 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:12:57 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:12:57 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:12:57 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:12:57 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:12:57 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:13:06 PM] __main__ INFO -- System recieved SIGHUP
+[12:13:06 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:13:06 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:13:06 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:13:06 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:13:06 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:13:06 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:13:06 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:13:06 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:13:06 PM] __main__ DEBUG -- Apllication execution completed
+[12:15:01 PM] __main__ INFO -- Application started on pid 5792
+[12:15:01 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:15:01 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:15:01 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:15:01 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:15:01 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:15:01 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:15:01 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:15:01 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:15:07 PM] __main__ INFO -- System recieved SIGHUP
+[12:15:07 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:15:07 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:15:07 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:15:07 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:15:07 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:15:07 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:15:07 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:15:07 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:15:07 PM] __main__ DEBUG -- Apllication execution completed
+[12:16:36 PM] __main__ INFO -- Application started on pid 5795
+[12:16:36 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:16:36 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:16:36 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:16:36 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:16:36 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:16:36 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:16:36 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:16:36 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:16:48 PM] __main__ INFO -- System recieved SIGHUP
+[12:16:48 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:16:48 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:16:48 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:16:48 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:16:48 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:16:48 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:16:48 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:16:48 PM] thor.application.Server INFO -- shutdownHook() called
+[12:17:20 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:17:20 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:17:20 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:17:20 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:17:20 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:17:20 PM] __main__ DEBUG -- Apllication execution completed
+[12:18:14 PM] __main__ INFO -- Application started on pid 5804
+[12:18:14 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:18:15 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:18:15 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:18:15 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:18:15 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:18:15 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:18:15 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:18:15 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:18:24 PM] __main__ INFO -- System recieved SIGHUP
+[12:18:24 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:18:24 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:18:24 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:18:24 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:18:24 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:18:24 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:18:24 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:18:24 PM] thor.application.Server INFO -- shutdownHook() called
+[12:18:24 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:18:24 PM] __main__ DEBUG -- Apllication execution completed
+[12:20:37 PM] __main__ INFO -- Application started on pid 5808
+[12:20:37 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:20:37 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:20:38 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:20:38 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:20:38 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:20:38 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:20:38 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:20:38 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:21:10 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+[12:21:43 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:21:43 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:21:43 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:21:43 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:21:43 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:21:43 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:21:43 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:21:43 PM] thor.application.Server INFO -- shutdownHook() called
+[12:21:43 PM] __main__ DEBUG -- Apllication execution completed
+[12:23:01 PM] __main__ INFO -- Application started on pid 5833
+[12:23:01 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:23:01 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:23:01 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:23:01 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:23:01 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:23:01 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:23:01 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:23:01 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:23:17 PM] __main__ INFO -- System recieved SIGHUP
+[12:23:17 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:23:17 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:23:17 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:23:17 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:23:17 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:23:17 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:23:17 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:23:17 PM] thor.application.Server INFO -- shutdownHook() called
+[12:23:39 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:23:39 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:23:39 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:23:39 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:23:39 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:23:39 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:23:39 PM] __main__ DEBUG -- Apllication execution completed
+[12:23:51 PM] __main__ INFO -- Application started on pid 5837
+[12:23:51 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:23:51 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:23:51 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:23:51 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:23:51 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:23:51 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:23:51 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:23:51 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:25:19 PM] __main__ INFO -- System recieved SIGHUP
+[12:25:19 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:25:19 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:25:19 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:25:19 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:25:19 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:25:19 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:25:19 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:25:19 PM] thor.application.Server INFO -- shutdownHook() called
+[12:25:19 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:25:19 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:25:19 PM] __main__ DEBUG -- Apllication execution completed
+[12:27:36 PM] __main__ INFO -- Application started on pid 5850
+[12:27:36 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:27:36 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:27:36 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:27:36 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:27:36 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:27:36 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:27:36 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:27:36 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:27:51 PM] __main__ INFO -- System recieved SIGHUP
+[12:27:51 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:27:51 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:27:51 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:27:51 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:27:51 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:27:51 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:27:51 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:27:51 PM] thor.application.Server INFO -- shutdownHook() called
+[12:28:01 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:28:01 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:28:01 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:28:01 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:28:01 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:28:01 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:28:01 PM] __main__ DEBUG -- Apllication execution completed
+[12:28:24 PM] __main__ INFO -- Application started on pid 5855
+[12:28:24 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:28:24 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:28:24 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:28:24 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:28:24 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:28:24 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:28:24 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:28:24 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:28:45 PM] __main__ INFO -- System recieved SIGHUP
+[12:28:45 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:28:45 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:28:45 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:28:45 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:28:45 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:28:45 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:28:45 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:28:45 PM] thor.application.Server INFO -- shutdownHook() called
+[12:28:45 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:28:45 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:28:45 PM] __main__ DEBUG -- Apllication execution completed
+[12:38:26 PM] __main__ INFO -- Application started on pid 5872
+[12:38:26 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:38:26 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:38:26 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:38:26 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:38:26 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:38:26 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:38:26 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:38:26 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:38:46 PM] __main__ INFO -- System recieved SIGHUP
+[12:38:46 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:38:46 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:38:46 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:38:46 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:38:46 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:38:46 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:38:46 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:38:46 PM] thor.application.Server INFO -- shutdownHook() called
+[12:38:46 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:38:46 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:38:46 PM] __main__ DEBUG -- Apllication execution completed
+[12:41:39 PM] __main__ INFO -- Application started on pid 5878
+[12:41:39 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:41:39 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:41:39 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:41:39 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:41:39 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:41:39 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:41:39 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:41:39 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:41:55 PM] __main__ INFO -- System recieved SIGHUP
+[12:41:55 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:41:55 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:41:55 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:41:55 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:41:55 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:41:55 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:41:55 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:41:55 PM] thor.application.Server INFO -- shutdownHook() called
+[12:42:02 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:42:02 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:42:02 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:42:02 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:42:02 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:42:02 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:42:02 PM] __main__ DEBUG -- Apllication execution completed
+[12:42:15 PM] __main__ INFO -- Application started on pid 5883
+[12:42:15 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:42:16 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:42:16 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:42:16 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:42:16 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:42:16 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:42:16 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:42:16 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:42:29 PM] __main__ INFO -- System recieved SIGHUP
+[12:42:29 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:42:29 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:42:29 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:42:29 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:42:29 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:42:29 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:42:29 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:42:29 PM] thor.application.Server INFO -- shutdownHook() called
+[12:42:35 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:42:35 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:42:35 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:42:35 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:42:35 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:42:35 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:42:35 PM] __main__ DEBUG -- Apllication execution completed
+[12:43:11 PM] __main__ INFO -- Application started on pid 5889
+[12:43:11 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:43:11 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:43:11 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:43:11 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:43:11 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:43:11 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:43:11 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:43:11 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:43:26 PM] __main__ INFO -- System recieved SIGHUP
+[12:43:26 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:43:26 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:43:26 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:43:26 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:43:26 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:43:26 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:43:26 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:43:26 PM] thor.application.Server INFO -- shutdownHook() called
+[12:43:26 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:43:26 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[12:43:26 PM] __main__ DEBUG -- Apllication execution completed
+[12:57:23 PM] __main__ INFO -- Application started on pid 5917
+[12:57:23 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:57:23 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:57:23 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:57:23 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:57:23 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:57:23 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:57:23 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:57:23 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:57:37 PM] __main__ INFO -- System recieved SIGHUP
+[12:57:37 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:57:37 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:57:37 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:57:37 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:57:37 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:57:37 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:57:37 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:57:37 PM] thor.application.Server INFO -- shutdownHook() called
+[12:57:37 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+[12:58:16 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:58:16 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:58:16 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:58:16 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:58:16 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:58:16 PM] __main__ DEBUG -- Apllication execution completed
+[12:58:49 PM] __main__ INFO -- Application started on pid 5923
+[12:58:49 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[12:58:49 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[12:58:49 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[12:58:49 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[12:58:49 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[12:58:49 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[12:58:49 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[12:58:49 PM] thor.application.Server DEBUG -- Startup sequence completed
+[12:59:07 PM] __main__ INFO -- System recieved SIGHUP
+[12:59:07 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:59:07 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:59:07 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:59:07 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:59:07 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[12:59:07 PM] thor.application.Server DEBUG -- Server shutdown started
+[12:59:07 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[12:59:07 PM] thor.application.Server INFO -- shutdownHook() called
+[12:59:07 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionDone'>: Connection was closed cleanly.
+]
+[12:59:16 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[12:59:16 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[12:59:16 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[12:59:16 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[12:59:16 PM] thor.application.Asgard INFO -- shutdownHook() called
+[12:59:16 PM] __main__ DEBUG -- Apllication execution completed
+[01:00:10 PM] __main__ INFO -- Application started on pid 5929
+[01:00:10 PM] __main__ DEBUG -- Application reactor type: pollreactor
+[01:00:10 PM] __main__ DEBUG -- Application arguments: ['/Users/dweiner/Documents/Workspace/Python/Thor/run.py', '-b']
+[01:00:10 PM] thor.application.Asgard DEBUG -- Starting the Asgard service
+[01:00:10 PM] thor.application.Asgard DEBUG -- Creating new server listening on 127.0.0.1:21189
+[01:00:10 PM] thor.application.Asgard INFO -- Primary listening server setup on <127.0.0.1:21189>
+[01:00:10 PM] thor.application.Asgard DEBUG -- Startup sequence completed
+[01:00:10 PM] thor.application.Server DEBUG -- Starting server listening on <127.0.0.1:21189>
+[01:00:10 PM] thor.application.Server DEBUG -- Startup sequence completed
+[01:00:24 PM] __main__ INFO -- System recieved SIGHUP
+[01:00:24 PM] thor.application.Asgard DEBUG -- Shutdown sequence initiated
+[01:00:24 PM] thor.application.Asgard DEBUG -- Stopping the Asgard service
+[01:00:24 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 0 children(s) currently running
+[01:00:24 PM] thor.application.Asgard DEBUG -- SHUTDOWN :: We have 1 server(s) currently running
+[01:00:24 PM] thor.application.Asgard DEBUG -- Closing server [Server <127.0.0.1:21189> status=True]
+[01:00:24 PM] thor.application.Server DEBUG -- Server shutdown started
+[01:00:24 PM] thor.application.Server DEBUG -- Stopping server listening on <127.0.0.1:21189>
+[01:00:24 PM] thor.application.Server INFO -- shutdownHook() called
+[01:00:24 PM] thor.application.Asgard INFO -- shutdownHook() called
+[01:00:24 PM] thor.application.client INFO -- [1] Disconnected [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.ConnectionLost'>: Connection to the other side was lost in a non-clean fashion: Connection lost.
+]
+[01:00:24 PM] __main__ DEBUG -- Apllication execution completed
