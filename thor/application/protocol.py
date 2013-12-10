@@ -5,8 +5,12 @@ from thor.application import client
 
 class Server(protocol.ServerFactory):
     
-    def __init__(self, iface='0.0.0.0', port=21189):
+    _serverShutdown = None
+    
+    def __init__(self, asgard, iface='0.0.0.0', port=21189):
         self.logger = logging.getLogger('thor.application.Server')
+        
+        self.asgard = asgard
         
         self.iface = iface
         self.port = port
@@ -14,7 +18,7 @@ class Server(protocol.ServerFactory):
         self.socket = None
         self.started = False
         
-        self.clients = []
+        self.clients = {}
         
     def __str__(self):
         return '[Server <%s:%s> status=%s]' % (self.iface, self.port, self.started)
@@ -35,28 +39,32 @@ class Server(protocol.ServerFactory):
         self.logger.error("stopping reactor due to failure...")        
         
         # TODO handle the failure
+        
+    def allConnectionsClosed(self):
+        if self._serverShutdown is not None:
+            return self._serverShutdown
+        return defer.succeed(True)
             
-    def buildProtocol(self, addr):
-        
-        c = client.Connection()    
-        self.clients.append(c)
-        
+    def buildProtocol(self, addr):        
+        c = client.Connection(self)       
+        self.clients[c.uid] = c 
         return c
     
     def isActive(self):
         # TODO More lgical checks here
-        return self.started
-        
+        return self.started 
     
-    def shutdown(self):
-        self.logger.debug('Server shutdown started')
-        d = self.stopServer()        
-        return d
+    def notifyServerConnectionLost(self, client):    
+        if client.uid in self.clients:     
+            del self.clients[client.uid]            
+        
+        if not self.clients and self._serverShutdown:
+            self._serverShutdown.addCallback(self.asgard.notifyServerShutdown)
+            self._serverShutdown.callback(self)
     
     def shutdownHook(self):
-        self.logger.info('shutdownHook() called')
         d = defer.Deferred()
-        # Perform additional shutdown tasks.
+        # Perform additional shutdown tasks.        
         # For now this is just a placeholder for future extension.       
         return d
                 
@@ -85,33 +93,37 @@ class Server(protocol.ServerFactory):
         # This function *MUST* callback / errback
         # the startServiceDeferred.
         startServiceDeferred.callback(True)
+        
+    def shutdown(self):
+        self.logger.debug('Server shutdown started')
+        
+        if self._serverShutdown is None:
+            self._serverShutdown = defer.Deferred()
+        
+        if self.started:
+            reactor.callFromThread(self.stopServer)
+            
+        return self._serverShutdown
     
     def stopServer(self):
         self.logger.debug('Stopping server listening on <%s:%s>' % (self.iface, self.port))
         # Here we want to return a default deferred object when we have run the
         # shutdown routines successfully. In stopping the server we want to stop
         # all connections and then wiat for them to be successfully closed
-        self._serverShutdown = protocol.ServerFactory.stopFactory(self)
+        status = protocol.ServerFactory.stopFactory(self)
         
-        if not self._serverShutdown:
-            self._serverShutdown = defer.Deferred()
+        if not status:
+            status = defer.Deferred()
+         
+        if not self.clients:
+            self.asgard.notifyServerShutdown(self)
+        else:
+            for uid, client in self.clients.iteritems():
+                client.sendMessage('Test write before shutdown')  
+                reactor.callFromThread(client.shutdown)
         
         if self.started:
-            self._serverShutdown.chainDeferred(self.shutdownHook())
-        self.started = False 
-        
-        if not self.clients:
-            return self._serverShutdown
-        
-        clientShutdown = defer.Deferred()
-        for client in self.clients:
-            client.sendMessage('Test write before shutdown')  
-            clientShutdown.chainDeferred(client.shutdown())
-            
-        self._serverShutdown.chainDeferred(clientShutdown)
-               
-        from thor.application.service import allConnectionsClosed
-        self._serverShutdown.chainDeferred(allConnectionsClosed(self))
-        
-        return self._serverShutdown
-        
+            status.chainDeferred(self.shutdownHook())
+        self.started = False       
+
+        return status

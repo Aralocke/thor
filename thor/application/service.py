@@ -6,6 +6,8 @@ from twisted.internet import defer, reactor
 
 class Asgard(service.MultiService):
     
+    _serversShutdown = None
+    
     def __init__(self, processes=0, iface='0.0.0.0', port='21189'): 
         # Initialize the Multi Service
         service.MultiService.__init__(self)
@@ -53,13 +55,18 @@ class Asgard(service.MultiService):
         
         reactor.stop()
         
+    def allServersShutdown(self):
+        if self._serversShutdown is not None:
+            return self._serversShutdown
+        return defer.succeed(True)
+        
     def create_server(self, iface='0.0.0.0', port='21189'):
         # Log message for the creation of a new server
         self.logger.debug('Creating new server listening on %s:%s', 
             iface, port)
         
         from thor.application import protocol
-        server = protocol.Server( iface=iface, port=port )
+        server = protocol.Server( self, iface=iface, port=port )
         
         # Add the newly spawned server to the reactor (which is live) and
         # begin listening for connections on it.
@@ -88,15 +95,31 @@ class Asgard(service.MultiService):
         # tl:dr - Insert initialization code here
         pass
     
+    def notifyServerShutdown(self, server):
+        for i in range(len(self.servers)):
+            if self.servers[i] is server:
+                print 'Removing server[%s]' % i
+                del self.servers[i]            
+        
+        if not self.servers and self._serversShutdown:
+            self._serversShutdown.addCallback(self._shutdown)       
+            self._serversShutdown.callback(None)
+    
     def _shutdown(self, d):
         reactor.stop()
     
-    def shutdown(self):       
+    def shutdown(self): 
+        if not self.servers:
+            return defer.succeed(None)
+        
+        if self._serversShutdown is None:
+            self._serversShutdown = defer.Deferred()
+            
         if self.started:
             self.logger.debug('Shutdown sequence initiated')
-            d = self.stopService()                      
-            d.addBoth(self._shutdown)
-            return d
+            reactor.callFromThread(self.stopService)
+            
+        return self._serversShutdown
     
     def setListeningInterface(self, iface='0.0.0.0', port='21189'):
         self.host = iface
@@ -119,7 +142,7 @@ class Asgard(service.MultiService):
         for server in self.servers:            
             if server.isActive():
                 self.logger.debug('Closing server %s' % (server))
-                status.chainDeferred(server.shutdown())
+                reactor.callFromThread(server.shutdown)
             
         # Shutdown the service permenantly by setting this flag. There is a possible
         # chance that the reactor shutdown trigger might go off again so this
@@ -127,10 +150,7 @@ class Asgard(service.MultiService):
         if self.started:
             status.chainDeferred(self.shutdownHook())
         self.started = False
-            
-        #status.addCallback(self.logger.info, 'Asgard shutdown')
-        #status.addErrback(self.logger.error, 'Asgard shutdown error')
-        
+
         # Stop service returns a deferred or a None value in this case
         # we actually wait until the shutdown has completed to initialize a 
         # graceful shutdown of the application
@@ -170,7 +190,7 @@ class Asgard(service.MultiService):
         # Returns None
         
     def shutdownHook(self):
-        self.logger.info('shutdownHook() called')
+        self.logger.debug('[1] shutdownHook() called')
         d = defer.Deferred()
         # Perform additional shutdown tasks.
         # For now this is just a placeholder for future extension.       

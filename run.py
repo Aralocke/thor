@@ -208,6 +208,7 @@ def sighup_handler(signal, frame):
     # TODO shutdown the reactor AFTER the shutdown event processes
     reactor.callFromThread(service.shutdown)
     
+    
 # Here we begin setting up the application initialization routines almost like a 
 # main method but we don't officially have one. All components passed this area 
 # are used exclusively in the setup and configuration of the Thor application
