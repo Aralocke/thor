@@ -26,7 +26,7 @@ class Asgard(service.MultiService):
         
         # Hold references to the servers and child processes running under this 
         # serice. Asgard acts as a hub for all information in the server application.
-        self.servers = []
+        self.servers = {}
         self.nodes = []
         
         # Set the port and interface combination for the local listening socket
@@ -34,30 +34,45 @@ class Asgard(service.MultiService):
         self.setListeningInterface( iface=iface, port=port )
         
     def _cbStartup(self, result):
-        """This callback really starts the service
-        listening on settings.PORT
-
-        """
+        # This callback really starts the service by setting the service status
+        # variable and igniting the service parent classes        
         self.started = True
         
+        # Quick debug message to let us know we started properly
         self.logger.debug('Startup sequence completed')
         
+        # Here we start the parent classes 
         service.MultiService.startService(self)
+        
+        # Return the result from the callback chain and get outta dodge
         return result
 
     def _ebStartup(self, failure):
-        """This errback shuts us down if an error occured
-        in process pool startup.
-
-        """
+        # This errback shuts us down if an error occured in process pool startup
+        
+        # Log messages here to know about the failure and then shut down the 
+        # reactor before anythign else can start up
+        #
+        # TODO Handle failures and provide better catastrophe logs
         self.logger.info("failure starting service: %s" % (str(failure)) )
         self.logger.error("stopping reactor due to failure...")
         
+        # The mains erviuce failed to start, we're now down and getting
+        # out of here
         reactor.stop()
         
+        # Some kind of world ending error just happened here. If the logs appear 
+        # useful, please tell somebody who knows what they are doign with this
+        # application
+        
     def allServersShutdown(self):
+        # Return the deferred that we fire when the server has been completely 
+        # shutdown. This will not fire until all connections have been closed
         if self._serversShutdown is not None:
             return self._serversShutdown
+        
+        # We're not shutting down, so just return a deferred that says we did
+        # whatever options we've been asked of and hope for this best
         return defer.succeed(True)
         
     def create_server(self, iface='0.0.0.0', port='21189'):
@@ -82,7 +97,7 @@ class Asgard(service.MultiService):
         # We maintain an internal list of servers that we are watching in a list
         # for shutdowns and such this list will be interated through and every
         # server will drop it's connections on a graceful shutdown
-        self.servers.append(server)
+        self.servers[server.uid] = server
    
         return server
         
@@ -92,33 +107,47 @@ class Asgard(service.MultiService):
         # the reactor or should be part of the reactor on initialization before 
         # we create any of the servers or children nodes
         #
-        # tl:dr - Insert initialization code here
+        # tl:dr - Insert pre-startup initialization code here
         pass
     
     def notifyServerShutdown(self, server):
-        for i in range(len(self.servers)):
-            if self.servers[i] is server:
-                print 'Removing server[%s]' % i
-                del self.servers[i]            
+        if server.uid in self.servers:     
+            del self.servers[server.uid]           
         
         if not self.servers and self._serversShutdown:
             self._serversShutdown.addCallback(self._shutdown)       
             self._serversShutdown.callback(None)
     
     def _shutdown(self, d):
+        # This function gets called last in the deferred's shutdown chain. By this
+        # point, all connections and servers have been successfully stopped, and
+        # shotdown so we can shutdown the reactor when ready
+        #
+        # The application will stop the reactor and the main thread will exit
+        # the execute method within run.py
         reactor.stop()
     
     def shutdown(self): 
+        # We have no servers so we can return a simple deferred immeadietly and
+        # not go to any other logic
         if not self.servers:
             return defer.succeed(None)
         
+        # We're initiating a shutdown so we setup the deferred chain that will
+        # be returned. This chain will only fire after every server and node have
+        # been shutdown and will prevent the reactor from exiting until we have
+        # finished processing everything
         if self._serversShutdown is None:
             self._serversShutdown = defer.Deferred()
-            
+        
+        # Logical check against the shutdown trigger being called twice. This call
+        # will shutdown the service, all servers, and all nodes by executing
+        # the shutdown sequence. It will be followed with the reactor shutting down
+        # and the program exiting
         if self.started:
             self.logger.debug('Shutdown sequence initiated')
             reactor.callFromThread(self.stopService)
-            
+                
         return self._serversShutdown
     
     def setListeningInterface(self, iface='0.0.0.0', port='21189'):
@@ -134,12 +163,13 @@ class Asgard(service.MultiService):
         status = service.MultiService.stopService(self)
         
         # TODO Shutdown of all child nodes
-        self.logger.debug('SHUTDOWN :: We have %s children(s) currently running' % (len(self.nodes)))
+        self.logger.debug('SHUTDOWN :: We have %s children(s) currently running' % 
+            (len(self.nodes)))
+                
+        self.logger.debug('SHUTDOWN :: We have %s server(s) currently running' % 
+            (len(self.servers)))
         
-        # TODO SHutdown of all servers
-        self.logger.debug('SHUTDOWN :: We have %s server(s) currently running' % (len(self.servers)))
-        
-        for server in self.servers:            
+        for uid, server in self.servers.iteritems():           
             if server.isActive():
                 self.logger.debug('Closing server %s' % (server))
                 reactor.callFromThread(server.shutdown)
