@@ -1,31 +1,7 @@
 import os
 import logging
-from twisted.application import service
 from twisted.internet.protocol import ClientFactory
 from thor.application import server
-
-class Crawler(service.MultiService):
-    
-    def __init__(self, host = '127.0.0.1', port = '21189'):
-        self.logger = logging.getLogger('thor.crawler[%s]' % (os.getpid()))
-        service.MultiService.__init__(self)
-        
-        self.connections = []
-        self.threads = []
-        self.spiders = []
-        
-        self.host = host
-        self.port = port
-        
-        self.service = CrawlerService(self)
-        
-    def shutdown(self):
-        self.logger.info('Initiating reactor shutdown process')
-        from twisted.internet import reactor
-        reactor.stop()
-        self.logger.info('Reactor shutdown process completed - now exiting')
-        sys.exit(2)
-
 
 class CrawlerService(ClientFactory):
     

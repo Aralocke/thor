@@ -129,6 +129,7 @@ if options.reactor != DEFAULT_REACTOR:
 LOG.debug('Application reactor type: %s' % reactor)
     
 def execute(app, argv, options):
+    global service
     # When twistd is implemented the arguments passed to this function will
     # be a list that should be appended to the application arguments that
     # are passed to the twistd reactor. 
@@ -144,16 +145,15 @@ def execute(app, argv, options):
     # twistd application
     LOG.debug('Application arguments: %s', sys.argv)
     
+    # Setup the signal handlers that the servers need to be aware of as the
+    # application daemon processes
+    signal.signal(signal.SIGHUP, sighup_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
+    
     # Instantiate the service object but building ourservles around a server
     # or two powered by Asgard. The Asgard service acts as a hub of information
     # for a number of servers and child nodes, all powered by the reactor
-    if options.runmode == RM_SERVER: 
-        global service
-        # Setup the signal handlers that the servers need to be aware of as the
-        # application daemon processes
-        signal.signal(signal.SIGHUP, sighup_handler)
-        signal.signal(signal.SIGINT, sigint_handler)
-        
+    if options.runmode == RM_SERVER:        
         # We imported the Asgard main service
         # for now we don't have any configuration options
         # but we will still return a created object here
@@ -162,7 +162,15 @@ def execute(app, argv, options):
         service.setListeningInterface( iface=options.host, port=options.port )
         
     elif options.runmode == RM_NODE: 
-        pass
+        # We import the service and setup the base MultiService for our application
+        # In this runmode we are acting as a Crawler manager which manages the spiders
+        # that are spawned in a thread pool
+        from thor.application import service as application
+        service = application.Crawler( threads=options.threads )
+        # The management interface here is the connection we want to target to
+        # connect to our parent asgard process. The host and port combination
+        # are given to us at runtime when Asgard spawns the child
+        service.setManagementInterface( iface=options.host, port=options.port )
     
     else: 
         # We are passed a runmode in the options parser. This mode tells us how 
@@ -198,6 +206,7 @@ def sigint_handler(signal, frame):
     # shutdown the reactor
     from twisted.internet import reactor
     # TODO shutdown the reactor AFTER the shutdown event processes
+    reactor.callFromThread(service.shutdown)
     
 def sighup_handler(signal, frame):
     global service
@@ -206,7 +215,7 @@ def sighup_handler(signal, frame):
     # shutdown the reactor
     from twisted.internet import reactor
     # TODO shutdown the reactor AFTER the shutdown event processes
-    reactor.callFromThread(service.shutdown)
+    reactor.callFromThread(service.rehash)
     
     
 # Here we begin setting up the application initialization routines almost like a 
