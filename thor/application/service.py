@@ -80,7 +80,7 @@ class Asgard(service.MultiService):
         # useful, please tell somebody who knows what they are doign with this
         # application
         
-    def allNodesShutdown(self):
+    def allServersShutdown(self):
         # Return the deferred that we fire when the server has been completely 
         # shutdown. This will not fire until all connections have been closed
         if self._serversShutdown is not None:
@@ -90,7 +90,7 @@ class Asgard(service.MultiService):
         # whatever options we've been asked of and hope for this best
         return defer.succeed(True)
         
-    def allServersShutdown(self):
+    def allNodesShutdown(self):
         # Return the deferred that we fire when the server has been completely 
         # shutdown. This will not fire until all connections have been closed
         if self._nodesShutdown is not None:
@@ -180,11 +180,17 @@ class Asgard(service.MultiService):
         if server.uid in self.servers:     
             del self.servers[server.uid]
             
+        if not self.servers:
+            self._serversShutdown.callback(None)
+            
         return self._completeShutdown()
             
     def notifyNodeShutdown(self, node):
         if node.pid in self.nodes:
             del self.nodes[node.pid]
+
+        if not self.nodes:
+            self._nodesShutdown.callback(self.servers)
             
         return self._completeShutdown()
             
@@ -199,6 +205,8 @@ class Asgard(service.MultiService):
         # prevent a false shutdown
         if self.nodes: return 2
         
+        if self.servers: return 3
+        
         # Calling this chain will result in shutting down of all the servers
         # once all the nodes have been closed. Waiting for nodes to shutdown
         # allows us to receive any final processing information from the nodes
@@ -206,7 +214,7 @@ class Asgard(service.MultiService):
         self._systemShutdown.addCallback(self._shutdown)       
         self._systemShutdown.callback(None)
         
-        return 3
+        return 4
     
     def _shutdown(self, d):
         # This function gets called last in the deferred's shutdown chain. By this
@@ -306,16 +314,22 @@ class Asgard(service.MultiService):
         # application gracefully and waiting on sockets to shut down properly
         status = service.MultiService.stopService(self)
         
+        if status is None:
+            status = defer.Deferred()
+            
+        def shutdownServers(servers):
+            for uid, server in servers.iteritems():           
+               if server.isActive():
+                   reactor.callFromThread(server.shutdown)
+        
+        self._nodesShutdown.addCallback(shutdownServers)
+        
         # Initiate the shutdown of the nodes by sending an interrupt signal
         # to each one. The signal will initate a sequence to exit out gracefully
         # and shut down all of their respective spiders
         for pid, node in self.nodes.iteritems():
             self.logger.debug('Sending shutdown signal to node on PID %s' % pid)
-            reactor.callFromThread(node.signal, signal.SIGINT)     
-            
-        for uid, server in self.servers.iteritems():           
-            if server.isActive():
-                reactor.callFromThread(server.shutdown)
+            reactor.callFromThread(node.signal, signal.SIGINT)       
             
         # Shutdown the service permenantly by setting this flag. There is a possible
         # chance that the reactor shutdown trigger might go off again so this
