@@ -6,6 +6,24 @@ import sys
 from twisted.application import internet, service
 from twisted.internet import defer, reactor
 
+from thor.crawler import crawler
+
+STATUS_CLEAN_SHUTDOWN     = 1
+STATUS_NO_SHUTDOWN        = 2
+STATUS_NODES_REMAIN       = 3
+STATUS_SERVERS_REMAIN     = 4
+STATUS_CONNECTIONS_REMAIN = 5
+STATUS_SPIDERS_REMAIN     = 6
+
+STATUS = {
+    STATUS_CLEAN_SHUTDOWN     : 'STATUS_CLEAN_SHUTDOWN',
+    STATUS_NO_SHUTDOWN        : 'STATUS_NO_SHUTDOWN',
+    STATUS_NODES_REMAIN       : 'STATUS_NODES_REMAIN',
+    STATUS_SERVERS_REMAIN     : 'STATUS_SERVERS_REMAIN',
+    STATUS_CONNECTIONS_REMAIN : 'STATUS_CONNECTIONS_REMAIN',
+    STATUS_SPIDERS_REMAIN     : 'STATUS_SPIDERS_REMAIN'
+}
+
 class Asgard(service.MultiService):
     
     _systemShutdown = None
@@ -198,23 +216,24 @@ class Asgard(service.MultiService):
         # Do not proceed if we are not engaging in a shutdown operation
         # This object will only be set in the event of a shutdown and
         # we should not proceed otherwise
-        if self._systemShutdown is None: return 1      
+        if self._systemShutdown is None: return STATUS_NO_SHUTDOWN      
         
         # Do not continue processing if we still have nodes that have not shutdown
         # This could be form nodes shutting down after scaling down, this will 
         # prevent a false shutdown
-        if self.nodes: return 2
+        if self.nodes: return STATUS_NODES_REMAIN
         
-        if self.servers: return 3
+        # DO not proceed if we still have active servers. Beyond this point is a 
+        # very final shutdown of the application
+        if self.servers: return STATUS_SERVERS_REMAIN
         
         # Calling this chain will result in shutting down of all the servers
         # once all the nodes have been closed. Waiting for nodes to shutdown
         # allows us to receive any final processing information from the nodes
         # connections      
         self._systemShutdown.addCallback(self._shutdown)       
-        self._systemShutdown.callback(None)
-        
-        return 4
+        self._systemShutdown.callback(None)        
+        return STATUS_CLEAN_SHUTDOWN
     
     def _shutdown(self, d):
         # This function gets called last in the deferred's shutdown chain. By this
@@ -254,6 +273,10 @@ class Asgard(service.MultiService):
         if self.started:
             self.logger.debug('Shutdown sequence initiated')
             reactor.callFromThread(self.stopService)
+        # Logical check in case the reactor is started but we never initialized
+        # the application
+        elif reactor.running:
+            reactor.stop()
                 
         return self._systemShutdown
     
@@ -341,7 +364,10 @@ class Asgard(service.MultiService):
         # Stop service returns a deferred or a None value in this case
         # we actually wait until the shutdown has completed to initialize a 
         # graceful shutdown of the application
-        return status      
+        return status  
+    
+    def rehash(self):
+        pass
         
 class Crawler(service.MultiService):
     
@@ -370,6 +396,7 @@ class Crawler(service.MultiService):
         self.system = 'Crawler'
         
         self.crawlers = {}
+        self.management = None
         
         # Set the port and interface combination for the local listening socket
         # that the child processes should connect to
@@ -379,6 +406,11 @@ class Crawler(service.MultiService):
         self.logger.info('Initializing crawler application running on pid %s' % os.getpid())
         
     def setManagementInterface(self, iface='0.0.0.0', port='21189'):
+        if self.management is not None:
+            # TODO Throw an error here because we cannot set a management interface
+            # during runtime when the management interface is already active
+            return
+        
         self.host = iface
         self.port = port
         
@@ -389,14 +421,13 @@ class Crawler(service.MultiService):
         service.MultiService.startService(self)
         # Debug log message that the service has begun processing
         self.logger.debug('Starting the Crawler service')       
-        
-        def callback(result):
-            # Return the result from the callback chain and get outta dodge
+        # Return the result from the callback chain and get outta dodge
+        def callback(result):            
             return result
-        
+        # Default error handler for the Cralwe startup. This is a nameless
+        # function until it becomes neeed
         def errback(err):
-            pass
-        
+            pass        
         # The following methods allow for a startup hook to be called when the 
         # startup is successful or when an error has occured
         d.addCallbacks(callback, errback)
@@ -411,6 +442,11 @@ class Crawler(service.MultiService):
         # This callback really starts the service by setting the service status
         # variable and igniting the service parent classes        
         self.started = True
+        # Every crawler maintains a socket connection to the primary Asgard server
+        # this is passed to the process on creation and is set with a call to the
+        # setManagementInterface method
+        self.management = crawler.CrawlerService( iface='0.0.0.0', port='21189' )
+        self.management.setServiceParent(self)
         # Quick debug message to let us know we started properly
         self.logger.debug('Startup sequence completed')
         # This function *MUST* callback / errback
@@ -419,32 +455,58 @@ class Crawler(service.MultiService):
         # Returns None
     
     def _completeShutdown(self):
-        if self._systemShutdown is None: return 1
+        # Do not proceed to do any shutdown operations if the deferred to signal
+        # a shutdown has not been setup. The only time we will ever see the
+        # systemSHutdown deferred  is when the shutdown operation has been signaled
+        # the the reactor for some reason
+        if self._systemShutdown is None: return STATUS_NO_SHUTDOWN
         
-        if self.crawlers: return 2
-  
+        # Do not proceed if we still have active crawlers open. Each one represents
+        # a thread running its own set of spiders. We don't move forward shutting 
+        # down the reactor until we exit the threads
+        if self.crawlers: return STATUS_SPIDERS_REMAIN
+        
+        # Assuming nothing has been chained to the shutdown deferred, this will
+        # be the final call that shuts down the reactor and allows the execute
+        # function to exit out
         self._systemShutdown.addCallback(self._shutdown)       
         self._systemShutdown.callback(None)
         
-        return 3
+        return STATUS_CLEAN_SHUTDOWN
     
     def _shutdown(self, d):
+        # This function gets called last in the deferred's shutdown chain. By this
+        # point, all connections and servers have been successfully stopped, and
+        # shotdown so we can shutdown the reactor when ready
+        #
+        # The application will stop the reactor and the main thread will exit
+        # the execute method within run.py
         reactor.stop()
     
     def shutdown(self):
-        
+        # The deferred here will signal a shutdown to the rest of the application
+        # as a semaphore flag. This is the first place it gets set in the application.
         if self._systemShutdown is None:
             self._systemShutdown = defer.Deferred()
         
+        # Assuming we're actually started and the reactor is running we will
+        # begin calling the shutdown option here via the reactor
         if self.started:
             self.logger.debug('Shutdown sequence initiated')
             reactor.callFromThread(self.stopService)
-                
+        # TODO There might be a case of teh reactor starting without initializing
+        # anything but this service, so somewhere down the line we need to create
+        # a check for this kind of scenario
+        
+        # Return the system shutdown deferred as a flag to the main reactor. This
+        # will only be fired after the shutdown of the connections and main 
+        # crawler application
         return self._systemShutdown
     
     def shutdownHook(self):
         d = defer.Deferred()
-        print 'Crawler shutdown hook'
+        # Perform additional shutdown tasks.
+        # For now this is just a placeholder for future extension.       
         return d
     
     def stopService(self):
