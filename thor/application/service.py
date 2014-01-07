@@ -34,6 +34,13 @@ class BaseService(service.MultiService, trigger.Triggers):
     def initialize(self):
         pass
 
+    def setApplication(self, application):
+        # Set the ervice parent, this is the actual twisted application. The only 
+        # implementation that overrides this are the primary services: Asgard and
+        # Crawler. Which each maintain a reference to the application for starting 
+        # other services
+        service.MultiService.setServiceParent(self, application)
+
     def serviceShutdown(self, passThrough=None):
         print 'Service shutting down -> %s' % self.uid
         # Set the boolean for the service to shutdown this should prevent
@@ -140,6 +147,14 @@ class DaemonService(BaseService):
         # If we ARE a daemon service we will shutdown the reactor when we have
         # completed our shutdown
         self.daemon = daemon
+
+    def setApplication(self, application):
+        # We maintain a reference to the application parent application that we 
+        # belong to
+        self.application = application
+        # After we save the reference call the base class method and begin 
+        # running things here
+        BaseService.setApplication(self, application)
 
     def setDaemonService(self, status=False):
         self.daemon = status

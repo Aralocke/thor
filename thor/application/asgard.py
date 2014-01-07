@@ -41,8 +41,11 @@ class Asgard(service.DaemonService):
         # serice. Asgard acts as a hub for all information in the server application.
         self.servers = {}
         self.nodes = {}
+        # Reference to the aprent application thatr we belong to. This is called in run.py
+        # and then set in setApplication
+        self.application = None
 
-    def create_server(self, iface='0.0.0.0', port='21189', root=None, 
+    def create_server(self, iface='0.0.0.0', port=21189, root=None, 
             socket=None, sslcert=None, sslkey=None, sslchain=None):
         # All of the application servers exist in this import from here
         # we can manipulate them to spawn their factories and then their
@@ -62,7 +65,7 @@ class Asgard(service.DaemonService):
             else:
                 # TODO Check if root directory exists
                 # TODO WebServer Caching?
-                _server = web.WebServer( iface=iface, port=port, root=root )
+                _server = web.WebServer( asgard=self, iface=iface, port=port, root=root )
         else:
             # Create a standard TCP server that listens for incomming connections
             # on this interface/port combo. The receivers here will be instances
@@ -124,7 +127,9 @@ class Asgard(service.DaemonService):
         print 'Asgard startupHook called'
 
         try:
-            _server = self.create_server()
+            _server = self.create_server(socket='data/thor.sock')
+
+            webServer = self.create_server(root='web')
         except Exception as e:
             import traceback
             traceback.print_exc()

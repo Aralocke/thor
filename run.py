@@ -195,7 +195,7 @@ def execute(app, argv, options):
         service.stopService) # Run the shutdown routine to clean up the components
     
     # Connect our service to our application
-    service.setServiceParent(app)
+    service.setApplication(app)
     
     # AT this point we start the reactor and engage the application. Everything 
     # from this point on is asnychronous and handled via the reactors callback

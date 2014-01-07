@@ -31,10 +31,6 @@ class Server(service.BaseService):
         # Then we pass it along the chain to the twisted service
         service.BaseService.setServiceParent(self, parent)
 
-    def startService(self):
-        print 'startService -> %s' % self.uid
-        service.BaseService.startService(self)
-
     def startupHook(self, startup):
         print 'Server startupHook called'
         startup.callback(None)

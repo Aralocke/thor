@@ -1,5 +1,7 @@
-nbproject
+# Folders and assocaited garbage / compiled files we don't want to track
+data
 *.log
+*.sock
 
 # Block Python compiled files
 *.pyc
