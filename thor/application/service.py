@@ -13,7 +13,7 @@ class BaseService(service.MultiService):
 
     _state = None
     
-    def __init__(self, parent=None):
+    def __init__(self):
         # Initialize the Multi Service
         service.MultiService.__init__(self)
         # Initiate the logger. This acts as the default logger for the 

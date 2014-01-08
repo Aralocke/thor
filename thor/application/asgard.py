@@ -2,6 +2,7 @@ import logging, os, sys
 
 from twisted.application import internet
 from twisted.internet import defer, reactor
+from thor.application import node as crawler
 from thor.application import service
 from thor.application.servers import tcp, unix, web
 
@@ -33,7 +34,8 @@ class Asgard(service.DaemonService):
         if processes == NO_PROCESS_ERR:
             raise Exception('Multiprocessing is not supported on this system')
         # Save the number of processes for later - see startService
-        self.processes = processes   
+        self.processes = processes 
+        self.threads = 4  
         # Set the actual listening interface variables here so that they exist
         # within the class - The default values are set below
         self.iface = None
@@ -46,7 +48,7 @@ class Asgard(service.DaemonService):
         self.servers = {}
         self.nodes = {}
 
-    def create_node(self, threads=-1, iface='127.0.0.1', port=21189, **options):
+    def create_node(self, threads=-1, socket=None, **options):
         # An array holding the arguments to send to the remote process
         # the first is the run.py command which will execute the node
         cmd = [ sys.argv[0] ]
@@ -55,8 +57,7 @@ class Asgard(service.DaemonService):
         cmd.append(['-m', '2'])
 
         # Add the host and port that the Crawler node should connect too
-        cmd.append(['-i', iface])
-        cmd.append(['-p', port])
+        cmd.append(['-s', socket])
         
         # Append the number of threads to spawn
         if threads == -1:
@@ -71,19 +72,10 @@ class Asgard(service.DaemonService):
             if option == 'debug' and value:
                 cmd.append('-d')
                 
-        from thor.crawler import node
-        node = node.Node( cmd, service=self )        
-
-        # Now that the command has been built we'll implode the set
-        # and pass it to spawn process
-        for i in range(len(cmd)):
-            if isinstance(cmd[i], list):
-                cmd[i] = ' '.join([str(x) for x in cmd[i]]) 
+        node = crawler.Node( cmd )  
+        node.setServiceParent(self)      
         
-        process = reactor.spawnProcess(node, cmd[0], cmd, usePTY=True)
-        node.setProcess(process)
-        
-        self.nodes[process.pid] = node
+        self.registerNode(node)
         
         return node
 
@@ -128,6 +120,18 @@ class Asgard(service.DaemonService):
         # there.
         return _server
 
+    def registerNode(self, node):
+        print '-> registerNode -> %s' % node.uid
+
+        if node.uid in self.nodes:
+            raise KeyError('Node already exists')
+
+        self.nodes[node.uid] = node
+
+        reactor.callWhenRunning(node.startup)
+
+        self.fireEventTrigger('node.register')
+
     def registerServer(self, server):
         print '-> registerServer -> %s' % server.uid
 
@@ -142,6 +146,16 @@ class Asgard(service.DaemonService):
         reactor.callWhenRunning(server.startup)
 
         self.fireEventTrigger('server.register')
+
+    def removeNode(self, node):
+        print '-> removeNode -> %s' % node.uid
+
+        if node.uid not in self.nodes:
+            raise KeyError('Node not registered')
+
+        del self.nodes[node.uid]
+
+        self.fireEventTrigger('node.unregister')
 
     def removeServer(self, server):
         print '-> removeServer -> %s' % server.uid
@@ -168,8 +182,15 @@ class Asgard(service.DaemonService):
         print 'Asgard startupHook called'
 
         try:
-            _server = self.create_server(socket='data/thor.sock')
+            socket = 'data/thor.sock'
+
+            _server = self.create_server(socket=socket)
             webServer = self.create_server(root='web')
+
+            #  Now we create the processes that act as the Crawlers
+            #for i in range(self.processes):
+            node = self.create_node(threads=self.threads, socket=socket, debug=True) 
+
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -186,8 +207,9 @@ class Asgard(service.DaemonService):
         # the node process. The 'node' object returned will link us to the
         # process manager that controls the node's IO connections
         # to the main application
-        for pid, node in self.nodes.iteritems():
-            pass
+        for uid, node in self.nodes.iteritems():
+            node.addEventTrigger('after', 'shutdown', self.removeNode, node)
+            reactor.callFromThread(node.shutdown)
         
         for uid, server in self.servers.iteritems(): 
             server.addEventTrigger('after', 'shutdown', self.removeServer, server)          
