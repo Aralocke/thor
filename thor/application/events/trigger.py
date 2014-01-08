@@ -1,4 +1,4 @@
-from twisted.internet import defer, reactor
+from twisted.internet import defer
 from thor.application.events import event
 
 class Triggers(object):
@@ -9,8 +9,6 @@ class Triggers(object):
 	def addEventTrigger(self, phase, eventType, function, *args, **kwargs):
 		assert callable(function), "%s is not callable" % function
 		if eventType not in self._eventTriggers:
-			from twisted.internet.base import _ThreePhaseEvent
-			#self._eventTriggers[eventType] = _ThreePhaseEvent()
 			self._eventTriggers[eventType] = event.ThreePhaseEvent()
 		triggerID = self._eventTriggers[eventType].addTrigger(phase, function,
 		    *args, **kwargs)

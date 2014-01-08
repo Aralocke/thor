@@ -6,11 +6,15 @@ from thor.application import service
 from thor.application.servers import tcp, unix, web
 
 class Asgard(service.DaemonService):
-    def __init__(self, processes=None, iface='127.0.0.1', port='21189'):
+
+    _shutdownHook = None
+
+    def __init__(self, processes=None, iface='127.0.0.1', port=21189):
         # Run the init routines on the parent class
         # this sets up all of the Twisted logic needed
         # later on
         service.DaemonService.__init__(self, daemon=True)
+        service.DaemonService.setName(self, 'Asgard')
         # Initiate the logger. This acts as the default logger for the 
         # application namesapce. Service level components will pass their log 
         # messages through this namespace
@@ -41,11 +45,49 @@ class Asgard(service.DaemonService):
         # serice. Asgard acts as a hub for all information in the server application.
         self.servers = {}
         self.nodes = {}
-        # Reference to the aprent application thatr we belong to. This is called in run.py
-        # and then set in setApplication
-        self.application = None
 
-    def create_server(self, iface='0.0.0.0', port=21189, root=None, 
+    def create_node(self, threads=-1, iface='127.0.0.1', port=21189, **options):
+        # An array holding the arguments to send to the remote process
+        # the first is the run.py command which will execute the node
+        cmd = [ sys.argv[0] ]
+
+        # Append the run mode option to the command line
+        cmd.append(['-m', '2'])
+
+        # Add the host and port that the Crawler node should connect too
+        cmd.append(['-i', iface])
+        cmd.append(['-p', port])
+        
+        # Append the number of threads to spawn
+        if threads == -1:
+            cmd.append(['-t', self.threads])
+        else:
+            cmd.append(['-t', threads])
+            
+        # Loop through the dictionary of arguments and process them as needed
+        for option, value in options.iteritems():
+            # If we are in debug mode, pass the debug flag to
+            # all spawned children
+            if option == 'debug' and value:
+                cmd.append('-d')
+                
+        from thor.crawler import node
+        node = node.Node( cmd, service=self )        
+
+        # Now that the command has been built we'll implode the set
+        # and pass it to spawn process
+        for i in range(len(cmd)):
+            if isinstance(cmd[i], list):
+                cmd[i] = ' '.join([str(x) for x in cmd[i]]) 
+        
+        process = reactor.spawnProcess(node, cmd[0], cmd, usePTY=True)
+        node.setProcess(process)
+        
+        self.nodes[process.pid] = node
+        
+        return node
+
+    def create_server(self, iface='127.0.0.1', port=21189, root=None, 
             socket=None, sslcert=None, sslkey=None, sslchain=None):
         # All of the application servers exist in this import from here
         # we can manipulate them to spawn their factories and then their
@@ -65,7 +107,7 @@ class Asgard(service.DaemonService):
             else:
                 # TODO Check if root directory exists
                 # TODO WebServer Caching?
-                _server = web.WebServer( asgard=self, iface=iface, port=port, root=root )
+                _server = web.WebServer( root=root, iface=iface, port=port )
         else:
             # Create a standard TCP server that listens for incomming connections
             # on this interface/port combo. The receivers here will be instances
@@ -73,13 +115,11 @@ class Asgard(service.DaemonService):
             _server = tcp.TCPServer( iface=iface, port=port )
         # The server represents a service that we store within our multiservice
         # so we need to set the parent service reference
-        #_server.setServiceParent(self)
+        _server.setServiceParent(self)
+
         # We need to queue the reactor for the initialization code
-        _server.addEventTrigger('before', 'startup', _server.initialize)
-        # The initialization routine should call immeadietly resulting in that
-        # code running first. After we initialize we can set the reactor to call
-        # the startService and kick the system into gear
-        reactor.callWhenRunning(_server.startService)
+        #_server.addEventTrigger('before', 'startup', _server.initialize)
+        
         # We maintain an internal list of servers that we are watching in a list
         # for shutdowns and such this list will be interated through and every
         # server will drop it's connections on a graceful shutdown
@@ -87,9 +127,6 @@ class Asgard(service.DaemonService):
         # Return the server instance to whatever called it and continue on from
         # there.
         return _server
-
-    def initialize(self):
-        print 'initialize -> %s' % self.uid
 
     def registerServer(self, server):
         print '-> registerServer -> %s' % server.uid
@@ -99,7 +136,12 @@ class Asgard(service.DaemonService):
 
         self.servers[server.uid] = server
 
-        server.fireEventTrigger('registered')
+        # The initialization routine should call immeadietly resulting in that
+        # code running first. After we initialize we can set the reactor to call
+        # the startService and kick the system into gear
+        reactor.callWhenRunning(server.startup)
+
+        self.fireEventTrigger('server.register')
 
     def removeServer(self, server):
         print '-> removeServer -> %s' % server.uid
@@ -109,13 +151,12 @@ class Asgard(service.DaemonService):
 
         del self.servers[server.uid]
 
-        server.fireEventTrigger('unregistered')
+        self.fireEventTrigger('server.unregister')
 
         # This logic takes place in the event of the LAST server
         # shutting down AND we are beginning to shutdown the application
-        if not self.servers:
-            if self._shutdownHook:
-                self._shutdownHook.callback(None)
+        if not self.servers and self._state == 'STOPPING':
+            self._shutdownHook.callback(None)
 
     def setListeningInterface(self, iface=None, port=None):
         if iface is not None:
@@ -128,7 +169,6 @@ class Asgard(service.DaemonService):
 
         try:
             _server = self.create_server(socket='data/thor.sock')
-
             webServer = self.create_server(root='web')
         except Exception as e:
             import traceback
@@ -141,7 +181,7 @@ class Asgard(service.DaemonService):
         # Create the deferred object which this class will use to fire the service's
         # primary shutdown when all assets have been shutdown. For Asgard this includes
         # any services and nodes that might have been launched
-        d = self._shutdownHook = defer.Deferred()
+        self._shutdownHook = defer.Deferred()
         # Loop through all the nodes. The list is indexed by the process id of
         # the node process. The 'node' object returned will link us to the
         # process manager that controls the node's IO connections
@@ -151,13 +191,16 @@ class Asgard(service.DaemonService):
         
         for uid, server in self.servers.iteritems(): 
             server.addEventTrigger('after', 'shutdown', self.removeServer, server)          
-            reactor.callFromThread(server.stopService)
+            reactor.callFromThread(server.shutdown)
+
         # Finally we chain the services deferred to our deferred here. When we have no more
         # services left to shutdown we well execute the call back and shut down the entire service
-        d.chainDeferred(shutdown)
+        self._shutdownHook.chainDeferred(shutdown)
+
         # We need a backup plan in case something went wrong or everything is already shutdown
         # so what happens here is a logical check to execute the deferred if we have no known nodes
         # or extra services
-        if not self.nodes and not self.servers: d.callback(None)
+        if not self.nodes and not self.servers: 
+            self._shutdownHook.callback(None)
         
         

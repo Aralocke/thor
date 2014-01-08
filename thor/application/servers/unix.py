@@ -9,7 +9,7 @@ from thor.application.factories import unix
 
 class UNIXServer(server.Server):
     def __init__(self, socket=None, owner=None, group=None):
-        server.Server.__init__(self, asgard=None)
+        server.Server.__init__(self)
 
         self.path = socket
         self.socket = None
@@ -20,9 +20,6 @@ class UNIXServer(server.Server):
 
         self.owner = owner or os.getuid()
         self.group = group or os.getgid()
-
-    def initialize(self):
-    	print 'UNIXServer initialized -> %s' % self.uid
 
     def startupHook(self, startup):
         print 'UNIXServer startupHook called  -> %s' % self.uid
@@ -43,7 +40,7 @@ class UNIXServer(server.Server):
         if os.path.exists(self.path):
         	os.unlink(self.path)
         # Now that we have a socket we can make the actual listening socket
-        self.logger.debug('Creating socket: %s' % self.path)
+        print 'Creating socket: %s' % self.path
         self.socket = reactor.listenUNIX(self.path, self.factory)
         # After we create the listening socket, let's secure it by setting proper 
         # ownership and permissions on it
@@ -53,4 +50,14 @@ class UNIXServer(server.Server):
 
     def shutdownHook(self, shutdown):
         print 'UNIXServer shutdownHook called  -> %s' % self.uid
-    	shutdown.callback(None)
+        # A shutdown deferred that will fire when all of the connections have been 
+        # closed and shutdown
+        self._shutdownHook = defer.Deferred()
+
+        # We chain the service's shutdown to the successful shutdown of our connections
+        # so that we can still send any remaining data
+    	self._shutdownHook.chainDeferred(shutdown)
+    	# Backup plan to shut down the Server if we don't have anny connections 
+    	# we can pop events from
+    	if not self.factory.hasClients():
+    		self._shutdownHook.callback(None)

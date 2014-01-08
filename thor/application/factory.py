@@ -17,13 +17,10 @@ class ServerClientFactory(protocol.ServerFactory):
         # as an index
         self.uid = generate_uid()
 
-    def hasClients():
+    def hasClients(self):
         if not self.clients:
             return False
         return True
-
-    def initialize(self):
-        print 'initialize -> %s' % self.uid
 
     def startFactory(self):
         print 'startFactory -> %s' % self.uid

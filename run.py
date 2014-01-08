@@ -183,19 +183,20 @@ def execute(app, argv, options):
         sys.exit(0)
     
     from twisted.internet import reactor
+    # Connect our service to our application
+    service.setServiceParent(app)
+
     # With the service object, we will use the reactor's callbacks to init and 
     # spawn the components of the application. Given the runmode we're using
     # this behavior could be different
+
     reactor.addSystemEventTrigger('after', 'startup', 
-        service.startService) # This will initialize the service
-    
-    reactor.addSystemEventTrigger('before', 'startup', 
-        service.initialize) # Load the pre-initialization routines
+        service.startService)
+    reactor.addSystemEventTrigger('after', 'startup', 
+        service.startup) # This will initialize the service
+
     reactor.addSystemEventTrigger('before', 'shutdown', 
-        service.stopService) # Run the shutdown routine to clean up the components
-    
-    # Connect our service to our application
-    service.setApplication(app)
+        service.shutdown) 
     
     # AT this point we start the reactor and engage the application. Everything 
     # from this point on is asnychronous and handled via the reactors callback
@@ -209,7 +210,7 @@ def sigint_handler(signal, frame):
     # shutdown the reactor
     from twisted.internet import reactor
     # TODO shutdown the reactor AFTER the shutdown event processes
-    reactor.callFromThread(service.stopService)
+    reactor.callFromThread(service.shutdown)
     
 def sighup_handler(signal, frame):
     global service
