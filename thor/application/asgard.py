@@ -51,7 +51,10 @@ class Asgard(service.DaemonService):
     def create_node(self, threads=-1, socket=None, **options):
         # An array holding the arguments to send to the remote process
         # the first is the run.py command which will execute the node
-        cmd = [ sys.argv[0] ]
+        #cmd = [ sys.argv[0] ]
+        cmd = [ '/usr/local/bin/python2.7', sys.argv[0] ]
+        #cmd = [ '/usr/local/bin/python2.7',
+        #    '/Users/dweiner/Documents/Workspace/Python/Thor/run.py' ]
 
         # Append the run mode option to the command line
         cmd.append(['-m', '2'])
@@ -71,12 +74,14 @@ class Asgard(service.DaemonService):
             # all spawned children
             if option == 'debug' and value:
                 cmd.append('-d')
-                
+        # Create our node manager that will spawn the process and handle any 
+        # events or I/O with it. We pass it the command line options that we have 
+        # generated above and set ourselves as the parent service.     
         node = crawler.Node( cmd )  
         node.setServiceParent(self)      
-        
+        # Register the node which will also schedule it for startup within the reactor
+        # The system saves this node by its UID and is referenced that way
         self.registerNode(node)
-        
         return node
 
     def create_server(self, iface='127.0.0.1', port=21189, root=None, 

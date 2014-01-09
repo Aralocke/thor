@@ -1,5 +1,3 @@
-#!/usr/bin/python2.7
-
 import os
 import logging
 import signal
@@ -75,6 +73,9 @@ parser.add_option('-i', '--host',
 parser.add_option('-p', '--port', 
     help='', 
     type='int', dest='port', default=21189)
+parser.add_option('-s', '--socket', 
+    help='Path to the socket that the Crawlers will conenct to or the Asgard process will spawn', 
+    type='string', dest='socket', default='data/thor.sock')
     
 # The args from 1- are all of the program arguments. The first arg (0th) is the
 # program executable and thus useless to us in parsing
@@ -140,7 +141,7 @@ def execute(app, argv, options):
     if argv is not None:
         args.extend(argv)
     sys.argv = args 
-    
+
     # Debugging purposes only to track the final argument list passed to the
     # twistd application
     LOG.debug('Application arguments: %s', sys.argv)
@@ -165,15 +166,17 @@ def execute(app, argv, options):
         service.setListeningInterface( iface=options.host, port=options.port )
         
     elif options.runmode == RM_NODE: 
+        print sys.argv
+        sys.exit(2)
         # We import the service and setup the base MultiService for our application
         # In this runmode we are acting as a Crawler manager which manages the spiders
         # that are spawned in a thread pool
-        from thor.application import service as application
-        service = application.Crawler( threads=options.threads )
+        #from thor.application import service as application
+        #service = application.Crawler( threads=options.threads )
         # The management interface here is the connection we want to target to
         # connect to our parent asgard process. The host and port combination
         # are given to us at runtime when Asgard spawns the child
-        service.setManagementInterface( iface=options.host, port=options.port )
+        #service.setManagementInterface( iface=options.host, port=options.port )
     
     else: 
         # We are passed a runmode in the options parser. This mode tells us how 

@@ -64,7 +64,7 @@ class BaseService(service.MultiService):
         pass
 
     def shutdown(self):
-        print 'shutdown called -> %s' % self.uid        
+        print '-> shutdown -> %s' % self.uid        
         # Shutdown the service permenantly by setting this flag. There is a possible
         # chance that the reactor shutdown trigger might go off again so this
         # will prevent two calls to reactor.stop()

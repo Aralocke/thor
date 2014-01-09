@@ -23,7 +23,7 @@ class ServerClientFactory(protocol.ServerFactory):
         return True
 
     def startFactory(self):
-        print 'startFactory -> %s' % self.uid
+        print '-> startFactory -> %s' % self.uid
 
     def stopFactory(self):
-        print 'stopFactory -> %s' % self.uid
+        print '-> stopFactory -> %s' % self.uid

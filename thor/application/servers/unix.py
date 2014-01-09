@@ -22,7 +22,7 @@ class UNIXServer(server.Server):
         self.group = group or os.getgid()
 
     def startupHook(self, startup):
-        print 'UNIXServer startupHook called  -> %s' % self.uid
+        print '-> UNIXServer startupHook -> %s' % self.uid
         # When working with local sockets we need to test the socket for a few
         # security measures and verification tests
         #
@@ -40,7 +40,6 @@ class UNIXServer(server.Server):
         if os.path.exists(self.path):
         	os.unlink(self.path)
         # Now that we have a socket we can make the actual listening socket
-        print 'Creating socket: %s' % self.path
         self.socket = reactor.listenUNIX(self.path, self.factory)
         # After we create the listening socket, let's secure it by setting proper 
         # ownership and permissions on it
@@ -49,7 +48,7 @@ class UNIXServer(server.Server):
         startup.callback(None)
 
     def shutdownHook(self, shutdown):
-        print 'UNIXServer shutdownHook called  -> %s' % self.uid
+        print '-> UNIXServer shutdownHook -> %s' % self.uid
         # A shutdown deferred that will fire when all of the connections have been 
         # closed and shutdown
         self._shutdownHook = defer.Deferred()
