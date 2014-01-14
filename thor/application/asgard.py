@@ -1,6 +1,5 @@
 import logging, os, sys
 
-from twisted.application import internet
 from twisted.internet import defer, reactor
 from thor.application import node as crawler
 from thor.application import service
@@ -51,10 +50,8 @@ class Asgard(service.DaemonService):
     def create_node(self, threads=-1, socket=None, **options):
         # An array holding the arguments to send to the remote process
         # the first is the run.py command which will execute the node
-        #cmd = [ sys.argv[0] ]
+        # TODO Find the correct python executable 
         cmd = [ '/usr/local/bin/python2.7', sys.argv[0] ]
-        #cmd = [ '/usr/local/bin/python2.7',
-        #    '/Users/dweiner/Documents/Workspace/Python/Thor/run.py' ]
 
         # Append the run mode option to the command line
         cmd.append(['-m', '2'])
@@ -126,24 +123,20 @@ class Asgard(service.DaemonService):
         return _server
 
     def registerNode(self, node):
-        print '-> registerNode -> %s' % node.uid
-
-        if node.uid in self.nodes:
+        if node.getUID() in self.nodes:
             raise KeyError('Node already exists')
 
-        self.nodes[node.uid] = node
+        self.nodes[node.getUID()] = node
 
         reactor.callWhenRunning(node.startup)
 
         self.fireEventTrigger('node.register')
 
     def registerServer(self, server):
-        print '-> registerServer -> %s' % server.uid
-
-        if server.uid in self.servers:
+        if server.getUID() in self.servers:
             raise KeyError('Server already exists')
 
-        self.servers[server.uid] = server
+        self.servers[server.getUID()] = server
 
         # The initialization routine should call immeadietly resulting in that
         # code running first. After we initialize we can set the reactor to call
@@ -153,29 +146,25 @@ class Asgard(service.DaemonService):
         self.fireEventTrigger('server.register')
 
     def removeNode(self, node):
-        print '-> removeNode -> %s' % node.uid
-
-        if node.uid not in self.nodes:
+        if node.getUID() not in self.nodes:
             raise KeyError('Node not registered')
 
-        del self.nodes[node.uid]
+        del self.nodes[node.getUID()]
 
         self.fireEventTrigger('node.unregister')
 
     def removeServer(self, server):
-        print '-> removeServer -> %s' % server.uid
-
-        if server.uid not in self.servers:
+        if server.getUID() not in self.servers:
             raise KeyError('Server not registered')
 
-        del self.servers[server.uid]
+        del self.servers[server.getUID()]
 
         self.fireEventTrigger('server.unregister')
 
         # This logic takes place in the event of the LAST server
         # shutting down AND we are beginning to shutdown the application
-        if not self.servers and self._state == 'STOPPING':
-            self._shutdownHook.callback(None)
+        #if not self.servers and self.getState() == 'STOPPING':
+        #    self._shutdownHook.callback(None)
 
     def setListeningInterface(self, iface=None, port=None):
         if iface is not None:
@@ -184,8 +173,6 @@ class Asgard(service.DaemonService):
             self.port = port
     
     def startupHook(self, startup):
-        print 'Asgard startupHook called'
-
         try:
             socket = 'data/thor.sock'
 
@@ -203,31 +190,45 @@ class Asgard(service.DaemonService):
         startup.callback(None)
         
     def shutdownHook(self, shutdown):
-        print 'Asgard shutdownHook called'
-        # Create the deferred object which this class will use to fire the service's
-        # primary shutdown when all assets have been shutdown. For Asgard this includes
-        # any services and nodes that might have been launched
-        self._shutdownHook = defer.Deferred()
+        print '-> Asgard shutdownHook'
         # Loop through all the nodes. The list is indexed by the process id of
         # the node process. The 'node' object returned will link us to the
         # process manager that controls the node's IO connections
         # to the main application
+        shutdownResults = []
         for uid, node in self.nodes.iteritems():
+            # Trigger an event to remove the node once we have finished shutting down
             node.addEventTrigger('after', 'shutdown', self.removeNode, node)
-            reactor.callFromThread(node.shutdown)
+
+            try:
+                result = node.shutdown()
+            except Exception as e:
+                print 'ERROR IN shutdownHook(nodes) [Asgard] -> %s' % e
+            else:
+                if isinstance(result, defer.Deferred):
+                    shutdownResults.append(result)  
         
         for uid, server in self.servers.iteritems(): 
-            server.addEventTrigger('after', 'shutdown', self.removeServer, server)          
-            reactor.callFromThread(server.shutdown)
+            # Trigger an event to remove the server form our list after the shutdown has completed
+            server.addEventTrigger('after', 'shutdown', self.removeServer, server)
+            
+            try:
+                result = server.shutdown()
+            except Exception as e:
+                print 'ERROR IN shutdownHook(servers) [Asgard] -> %s' % e
+            else:
+                if isinstance(result, defer.Deferred):
+                    shutdownResults.append(result)   
 
         # Finally we chain the services deferred to our deferred here. When we have no more
-        # services left to shutdown we well execute the call back and shut down the entire service
-        self._shutdownHook.chainDeferred(shutdown)
+        # services left to shutdown we well execute the call back and shut down the entire service      
+        d = defer.gatherResults(shutdownResults, consumeErrors=True)
+        d.addCallback(shutdown.callback)
 
         # We need a backup plan in case something went wrong or everything is already shutdown
         # so what happens here is a logical check to execute the deferred if we have no known nodes
         # or extra services
         if not self.nodes and not self.servers: 
-            self._shutdownHook.callback(None)
+            shutdown.callback(None)
         
         

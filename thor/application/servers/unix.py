@@ -4,7 +4,7 @@ import os
 
 from twisted.application import internet
 from twisted.internet import defer, reactor
-from thor.application import server
+from thor.application import server, service
 from thor.application.factories import unix
 
 class UNIXServer(server.Server):
@@ -22,7 +22,6 @@ class UNIXServer(server.Server):
         self.group = group or os.getgid()
 
     def startupHook(self, startup):
-        print '-> UNIXServer startupHook -> %s' % self.uid
         # When working with local sockets we need to test the socket for a few
         # security measures and verification tests
         #
@@ -48,7 +47,6 @@ class UNIXServer(server.Server):
         startup.callback(None)
 
     def shutdownHook(self, shutdown):
-        print '-> UNIXServer shutdownHook -> %s' % self.uid
         # A shutdown deferred that will fire when all of the connections have been 
         # closed and shutdown
         self._shutdownHook = defer.Deferred()

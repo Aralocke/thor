@@ -18,7 +18,7 @@ class WebServer(tcp.TCPServer):
         self.port = port
 
     def startupHook(self, startup):
-        print '-> WebServer startupHook -> %s' % self.uid
+        print '-> WebServer startupHook -> %s' % self.getUID()
 
         root = static.File(self.docroot)
         self.factory = web.WebSite(root)
@@ -29,7 +29,7 @@ class WebServer(tcp.TCPServer):
         startup.callback(None)
 
     def shutdownHook(self, shutdown):
-        print '-> WebServer shutdownHook -> %s' % self.uid
+        print '-> WebServer shutdownHook -> %s' % self.getUID()
     	shutdown.callback(None)
 
 class SSLWebServer(WebServer):

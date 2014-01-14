@@ -146,12 +146,6 @@ def execute(app, argv, options):
     # twistd application
     LOG.debug('Application arguments: %s', sys.argv)
     
-    # Setup the signal handlers that the servers need to be aware of as the
-    # application daemon processes
-    if hasattr(signal, 'SIGHUP'):
-        signal.signal(signal.SIGHUP, sighup_handler)
-    signal.signal(signal.SIGINT, sigint_handler)
-    
     # Instantiate the service object but building ourservles around a server
     # or two powered by Asgard. The Asgard service acts as a hub of information
     # for a number of servers and child nodes, all powered by the reactor
@@ -166,13 +160,11 @@ def execute(app, argv, options):
         service.setListeningInterface( iface=options.host, port=options.port )
         
     elif options.runmode == RM_NODE: 
-        print sys.argv
-        sys.exit(2)
         # We import the service and setup the base MultiService for our application
         # In this runmode we are acting as a Crawler manager which manages the spiders
         # that are spawned in a thread pool
-        #from thor.application import service as application
-        #service = application.Crawler( threads=options.threads )
+        from thor.crawler import service as application
+        service = application.Crawler( threads=options.threads, socket=options.socket )
         # The management interface here is the connection we want to target to
         # connect to our parent asgard process. The host and port combination
         # are given to us at runtime when Asgard spawns the child
@@ -198,8 +190,8 @@ def execute(app, argv, options):
     reactor.addSystemEventTrigger('after', 'startup', 
         service.startup) # This will initialize the service
 
-    reactor.addSystemEventTrigger('before', 'shutdown', 
-        service.shutdown) 
+    #reactor.addSystemEventTrigger('before', 'shutdown', 
+    #    service.shutdown) 
     
     # AT this point we start the reactor and engage the application. Everything 
     # from this point on is asnychronous and handled via the reactors callback
@@ -218,12 +210,16 @@ def sigint_handler(signal, frame):
 def sighup_handler(signal, frame):
     global service
     # TODO Cool alert message
-    LOG.info('System recieved SIGHUP')
+    LOG.info('[%d] System recieved SIGHUP [%s]' % (os.getpid(), signal))
     # shutdown the reactor
     from twisted.internet import reactor
     # TODO shutdown the reactor AFTER the shutdown event processes
     reactor.callFromThread(service.rehash)
-    
+
+# Setup the signal handlers that the servers need to be aware of as the
+# application daemon processes
+signal.signal(signal.SIGINT, sigint_handler)
+signal.signal(signal.SIGHUP, sighup_handler)    
     
 # Here we begin setting up the application initialization routines almost like a 
 # main method but we don't officially have one. All components passed this area 
