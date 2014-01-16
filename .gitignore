@@ -2,6 +2,7 @@
 data
 *.log
 *.sock
+*.cache
 
 # Block Python compiled files
 *.pyc
