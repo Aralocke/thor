@@ -1,8 +1,9 @@
-from thor.common.core import hook
+from thor.common.core import hook, object
 
-class Component(hook.Hooked):
+class Component(object.Object, hook.Hooked):
 
-	def __init__(self):
+	def __init__(self, **kwargs):
+		object.Object.__init__(self)
 		hook.Hooked.__init__(self)
 
 		self.addHook('initialize', self.initialize)
@@ -42,9 +43,9 @@ class Connection(Component):
 
 class Service(Component):
 
-	def __init__(self):
+	def __init__(self, **kwargs):
 		# Call the parent init function
-		Component.__init__(self)
+		Component.__init__(self, **kwargs)
 
 	def _shutdownService(self, passThrough=None):
 		# Set the boolean for the service to shutdown this should prevent

@@ -44,8 +44,8 @@ else:
     DEFAULT_REACTOR = 'poll'
 
 # Setup the command line option parser
-from optparse import OptionParser
-parser = OptionParser()
+from thor.app import parser
+parser = parser.OptionParser()
 
 # Separation between the twistd arguments and those that are being passed to our applictaion
 # at run time. the twistd args setup the twistd daemon while opt's are passed directly to the
@@ -98,16 +98,17 @@ if options.reactor != DEFAULT_REACTOR:
 for option in ('logfile', 'pidfile'):
     if hasattr(options, option):
         twistd.extend(['--'+option, getattr(options, option)])
-# The second loop will grab the application arguments and place them into a second list
-for option in (''):
-    if hasattr(options, option):
-        opts.extend(['--'+option, getattr(options, option)])
 
 if not options.daemonise:
     twistd.append('-n')
 
 if options.debug:
     opts.append('-b') 
+
+# We have to extend the application arguments because we want the twistd option parser
+# to be able to  parse everything. We are extending the list LAST in case we want to pass
+# arguments (like DEBUG) to the actuall application
+opts.extend(args)
 
 # Execute the application. All application initialization logic has been cleared, 
 # arguments parsed, and application initialized. From here on out we're in the

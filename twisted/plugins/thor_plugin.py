@@ -1,19 +1,33 @@
-import os
+import os, sys
 
 from zope.interface import implements
 from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.internet import reactor
 from twisted.plugin import IPlugin
-from twisted.python import usage
+from twisted.python import log, usage
 
 from thor import app
 
 class Options(usage.Options):
 	optParameters = [
-		['runmode', 'R', 1, 'Runmode for the application. Usually set by the application', int],
+		# Default controls. This will launch one web server configuration listening on the
+		# single ip/port combination. These settings are overriden if either transport specfic 
+		# configuartions below are used
+		['iface', 'i', '127.0.0.1', '', str],
+		['port', 'p', 21189, '', int],
+		# Configuration for the HTTPS transport method for the web server. This will override
+		# the defaults that get setup above
+		['ssl-iface', 'j', None, '', str],
+		['ssl-port', 'l', None, '', int],
+		# Control the number of processes and threads that get spawned by Asgard
+		# and its children applications
 		['processes', 'P', 4, 'Number of processes for Asgard to spawn', int],
 		['threads', 'T', 8, 'Number of threads for a crawler to spawn', int],
+		# Misc command line parameters for handling operational controls and
+		# file system locations
+		['runmode', 'R', 1, 'Runmode for the application. Usually set by the application', int],
+		['socket', 'S', 'data/thor.sock', 'File System location for unix domain socket', str],
 	]
 
 	optFlags = [
@@ -38,23 +52,36 @@ class ThorServiceMaker(object):
 			os.mkdir('data')
 
 	def makeService(self, options):
+		# The twisted application framework provides us with a parent class that we can use
+		# to access their framework API. We wrap our application within it
+		self.application = service.Application('thor')
 		# We're initializing the application before instantiating it. This allows us to setup
 		# the file system and other directories that are needed or in use by the application.
 		# Particularly the data directory which holds the PID file and primary log directory
 		self.initialize(options)
+		# Convert the options dictionary into keyword args that we can pass to our application 
+		# controllers. FOr some reason, nobody had the smart idea to make usage.Options iterable
+		# as a dictionary ... 
+		kwargs = {}
+		for id, option in options.items(): 
+			kwargs[id] = option
 		# The first runmode creates a complete master server running the entire stack including
 		# a built in web server for handling the web UI components
 		if options['runmode'] == 1:
-			application = app.Asgard( processes=options['processes'])
+			application = app.Asgard( **kwargs )
 		# The second runmode is for launching Crawler processes that manage the workload
 		# like worker bees. by themselves they are their own reactor and application
 		# but react in different ways than a master application
 		elif options['runmode'] == 2:
-			application = app.Crawler( threads=options['threads'] )
+			application = app.Crawler( **kwargs )
 		# The third runmode is to run a Web Server only and none of the worker components. This
 		# would connect to a master server and act as a control panel for the nodes
 		elif options['runmode'] == 3:
-			application = app.Asgard(webServerOnly=True)
+			application = app.Asgard( webServerOnly=True, **kwargs )
+		# Set the service parent of our application to be Thor
+		# This will allow us to build out and use the API's provided by the built-in twistd 
+		# application framework
+		application.setServiceParent(self.application)
 				
 		# The value returned from here needs to be a service or an implementation to the
 		# twisted Service
