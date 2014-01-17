@@ -1,17 +1,22 @@
+import os, sys
+
 from twisted.internet import defer, reactor
 from twisted.python import log
-from thor.common import system as sys
+from thor.app.asgard import node as crawler
+from thor.common import system
 from thor.common.core import servers, service
 from thor.common.core.service import RUN_OPT_ASGARD, RUN_OPT_CRAWLER, RUN_OPT_WEB
 
 class Asgard(service.DaemonService):
 
-	def __init__(self, webServerOnly=False, **kwargs):
+	def __init__(self, twistdOpts=None, webServerOnly=False, **kwargs):
 		# Run the init routines on the parent class
         # this sets up all of the Twisted logic needed
         # later on
 		service.DaemonService.__init__(self, **kwargs)
 		service.DaemonService.setName(self, 'Asgard')
+		# We need to save the twistd options for later when we start the Crawler processes
+		self.twistdOpts = twistdOpts
 		# Flag to signal our startup if we are only spawning a web server or if we are
 		# a full Asgard instance. Web Servers will only spawn TCP servers capable of handling
 		# the RESTful web service
@@ -21,8 +26,8 @@ class Asgard(service.DaemonService):
 		#
 		# Number of processes we're going to spawn. These are workers that respond to signals,
 		# web tasks, etc and do the heavy labor
-		self.processes = kwargs.get('processes', sys.processes())
-		self.threads = kwargs.get('threads', sys.threads())
+		self.processes = kwargs.get('processes', system.processes())
+		self.threads = kwargs.get('threads', system.threads())
 		# Location of the socket that will be created for communicating with the
 		# local processes
 		self.socket = kwargs.get('socket', None)
@@ -47,6 +52,42 @@ class Asgard(service.DaemonService):
 		# Web Service interface configuration for the HTTPS transport protocol.
 		self.setWebInterface('https', iface=kwargs.get('ssl-iface', self.iface['https']), 
 			port=kwargs.get('ssl-port', self.port['https']))
+
+	def create_node(self, threads=None, socket=None, **options):
+		# An array holding the arguments to send to the remote process
+		# the first is the run.py command which will execute the node
+		cmd = [ sys.executable ]
+		cmd.extend(self.twistdOpts)
+
+		# Append the run mode option to the command line
+		cmd.extend(['--runmode', '2'])
+
+		# Add the host and port that the Crawler node should connect too
+		cmd.extend(['--socket', socket])
+
+		# Append the number of threads to spawn
+		cmd.extend(['--threads', str(threads or self.threads)])
+	
+		# Loop through the dictionary of arguments and process them as needed
+		for option, value in options.iteritems():
+			# If we are in debug mode, pass the debug flag to
+			# all spawned children
+			continue
+		# Create our node manager that will spawn the process and handle any 
+		# events or I/O with it. We pass it the command line options that we have 
+		# generated above and set ourselves as the parent service.     
+		node = crawler.Node( cmd ) 
+
+		# Register the node which will also schedule it for startup within the reactor
+		# The system saves this node by its UID and is referenced that way
+		node.addHook('startup', self.registerNode, node)
+		node.addHook('shutdown', self.removeNode, node)
+
+		# The node represents a service that we store within our multiservice
+		# so we need to set the parent service reference
+		node.setServiceParent(self)      
+
+		return node
 
 	def create_server(self, **kwargs):
 		# All of the application servers exist in this import from here
@@ -94,11 +135,23 @@ class Asgard(service.DaemonService):
 
 		return RUN_OPT_ASGARD
 
+	def registerNode(self, node):
+		if node.getUID() in self.nodes:
+			raise KeyError('Node already exists')
+		self.nodes[node.getUID()] = node
+		self.fire('node.register')
+
 	def registerServer(self, server):
 		if server.getUID() in self.servers:
 			raise KeyError('Server already exists')
 		self.servers[server.getUID()] = server
 		self.fire('server.register')
+
+	def removeNode(self, node):
+		if node.getUID() not in self.nodes:
+			raise KeyError('Node not registered')
+		del self.nodes[node.getUID()]
+		self.fire('node.remove')
 
 	def removeServer(self, server):
 		if server.getUID() not in self.servers:
@@ -133,5 +186,8 @@ class Asgard(service.DaemonService):
 			log.msg('Spawning local socket: %s' % self.socket)
 			u_server = self.create_server(socket=self.socket)
 			w_server = self.create_server(docroot='web')
+
+			#for i in range(self.processes):
+			node = self.create_node(threads=self.threads, socket=self.socket, debug=True)
 		except:
 			log.err()

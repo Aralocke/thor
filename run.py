@@ -67,6 +67,9 @@ parser.add_option('-b', '--debug',
 parser.add_option('-r', '--reactor', 
     help='Which reactor to use (see --help-reactors for a list)', 
     dest='reactor', default=DEFAULT_REACTOR)
+parser.add_option('-o', '--no_save', 
+    help='Do not save the state of the application (print pid files, etc)', 
+    action='store_true', dest='saving', default=False)
 
 # The following options are for the locations of the log files and the master server's
 # PID file. The master server is the primary monitor and is an incarnation of the
@@ -76,10 +79,10 @@ parser.add_option('-r', '--reactor',
 # root directory of the application.
 parser.add_option('-l', '--logfile', 
     help='Path to twisted log file.', 
-    dest='logfile', default='data/thor.log')
+    dest='logfile', default=None)
 parser.add_option('-P', '--pidfile', 
     help='Path to store PID file', 
-    dest='pidfile', default='data/thor.pid')
+    dest='pidfile', default=None)
 
 # The args from 1- are all of the program arguments. The first arg (0th) is the
 # program executable and thus useless to us in parsing
@@ -98,6 +101,12 @@ if options.reactor != DEFAULT_REACTOR:
 for option in ('logfile', 'pidfile'):
     if hasattr(options, option):
         twistd.extend(['--'+option, getattr(options, option)])
+
+if not hasattr(args, 'runmode'):
+    if not options.pidfile:
+        twistd.extend(['--pidfile', 'data/thor.pid'])
+    if not options.logfile:
+        twistd.extend(['--logfile', 'data/thor.log'])
 
 if not options.daemonise:
     twistd.append('-n')
