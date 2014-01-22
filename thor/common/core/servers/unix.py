@@ -6,13 +6,15 @@ from thor.common.core.factories import unix
 
 class UNIXServer(server.Server):
 
-	def __init__(self, socket=None, owner=None, group=None):
+	def __init__(self, socket=None, protocol=None,
+			owner=None, group=None):
+
 		server.Server.__init__(self)
 
 		self.path = socket
 		self.socket = None
 
-		self.factory = unix.UNIXServerClientFactory()
+		self.factory = unix.UNIXServerClientFactory(self, protocol)
 
 		self.owner = owner or os.getuid()
 		self.group = group or os.getgid()

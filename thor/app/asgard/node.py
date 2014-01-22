@@ -1,17 +1,25 @@
 import os
 
 from twisted.application import internet
-from twisted.internet import defer, protocol, reactor
+from twisted.internet import defer, process, protocol, reactor
+from twisted.python import runtime
 
-from thor.common.core import component, service
+from thor.common.core import component, connection, service
 
-class ProcessManager(component.BufferedComponent, protocol.ProcessProtocol):
+class ProcGroupProcess(process.Process):
+
+    def _setupChild(self, *args, **kwargs):
+        Process._setupChild(self, *args, **kwargs)
+
+        os.setpgid(0, 0)
+
+class ProcessManager(component.Component, connection.BufferedConnection, 
+    protocol.ProcessProtocol):
 
     parent = None
-    state = None
 
-    def __init__(self, parent=None):
-        component.BufferedComponent.__init__(self)
+    def __init__(self, parent=None):        
+        component.Component.__init__(self)
         # Save a reference to our parent node controllers
         self.parent = parent
         # Set the initial state of the application. This will also ensure there is
@@ -63,9 +71,11 @@ class Node(service.Service):
         # will remain during the lifetime of the process
         self.pid = None
         self.process = None
-
-        self.owner = owner or None
-        self.group = group or None
+        self.environment = None
+        self.workdir = None
+        self.usePTY = True
+        self.owner = owner or os.getuid()
+        self.group = group or os.getgid()
 
     def getArgs(self):
         cmd = []
@@ -108,9 +118,19 @@ class Node(service.Service):
     def startup(self):            
         self.manager.setState('SPAWNING')
         print 'Executing [%s, %s]: %s' % (self.owner, self.group, self.args)
-        self.process = reactor.spawnProcess(self.manager, self.args[0], self.args,  
-            uid=self.owner, gid=self.group)
+
+        self.process = self.__spawnProcess(
+            self.manager, self.args[0], self.args,
+            self.environment, self.workdir,
+            usePTY=self.usePTY)
 
         self.pid = self.process.pid
 
         self.fire('node.spawn')
+
+    def __spawnProcess(self, processProtocol, executable, args=(), env={},
+        path=None, uid=None, gid=None, usePTY=False, childFDs=None):
+        # use the ProcGroupProcess class, if available
+
+        return reactor.spawnProcess(processProtocol, executable, args,  
+                env, path, usePTY=usePTY) 

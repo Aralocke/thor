@@ -3,16 +3,28 @@ from thor.common.core import object
 
 class ClientFactory(object.Object, protocol.ClientFactory):
 
-    def __init__(self):
-        object.Object.__init__(self)
+	parent = None
+
+	def __init__(self, parent, protocol):
+		object.Object.__init__(self)
+		# The parent value represents the connection object that the
+		# factory creates protocol clients for
+		self.parent = parent
+		# The protocol we will spawn in the event of a connection. This is a 
+		# single protocol to understand communications between the Asgard
+		# server and the crawlers
+		self.protocol = protocol
 
 class ServerClientFactory(object.Object, protocol.ServerFactory):
 
-    def __init__(self, protocol=None):
-        object.Object.__init__(self)
+	parent = None
 
-    def startFactory(self):
-        print '-> startFactory -> %s' % self.getUID()
-
-    def stopFactory(self):
-        print '-> stopFactory -> %s' % self.getUID()
+	def __init__(self, parent, protocol):
+		object.Object.__init__(self)
+		# The parent value represents the server that we are creating
+		# protocol clients for
+		self.parent = parent
+		# The protocol we will spawn in the event of a connection. This is a 
+		# single protocol to understand communications between the Asgard
+		# server and the crawlers
+		self.protocol = protocol

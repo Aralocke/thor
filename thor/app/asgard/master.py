@@ -1,11 +1,37 @@
 import os, sys
 
 from twisted.internet import defer, reactor
-from twisted.python import log
+from twisted.python import log, usage
 from thor.app.asgard import node as crawler
+from thor.app.realm import protocol
 from thor.common import system
 from thor.common.core import servers, service
 from thor.common.core.service import RUN_OPT_ASGARD, RUN_OPT_CRAWLER, RUN_OPT_WEB
+
+class Options(usage.Options):
+	optParameters = [
+		# Default controls. This will launch one web server configuration listening on the
+		# single ip/port combination. These settings are overriden if either transport specfic 
+		# configuartions below are used
+		['iface', 'i', '127.0.0.1', '', str],
+		['port', 'p', 21189, '', int],
+		# Configuration for the HTTPS transport method for the web server. This will override
+		# the defaults that get setup above
+		['ssl-iface', 'j', None, '', str],
+		['ssl-port', 'l', None, '', int],
+		# Control the number of processes and threads that get spawned by Asgard
+		# and its children applications
+		['processes', 'P', 4, 'Number of processes for Asgard to spawn', int],
+		['threads', 'T', 8, 'Number of threads for a crawler to spawn', int],
+		# Misc command line parameters for handling operational controls and
+		# file system locations
+		['runmode', 'R', 1, 'Runmode for the application. Usually set by the application', int],
+		['socket', 'S', 'data/thor.sock', 'File System location for unix domain socket', str],
+	]
+
+	optFlags = [
+		['debug', 'b', 'Run the server in debug mode']
+	]
 
 class Asgard(service.DaemonService):
 
@@ -60,7 +86,7 @@ class Asgard(service.DaemonService):
 		cmd.extend(self.twistdOpts)
 
 		# Append the run mode option to the command line
-		cmd.extend(['--runmode', '2'])
+		cmd.extend(['-R', str(RUN_OPT_CRAWLER)])
 
 		# Add the host and port that the Crawler node should connect too
 		cmd.extend(['--socket', socket])
@@ -96,7 +122,11 @@ class Asgard(service.DaemonService):
 		if kwargs.get('socket') is not None:
 			# This will create a UNIX socket at the location of 'socket' and
 			# listen for incomming connections form this location
-			server = servers.UNIXServer( socket=kwargs.get('socket') )
+			server = servers.UNIXServer( socket=kwargs.get('socket'),
+				# A single event driven communication protocol for all clients to use
+				# this handles all of the transformations of text and messages between
+				# the servers and respective clients
+				protocol=protocol.ServerClientProtocol )
 		elif kwargs.get('docroot') is not None:
 			# This tells us we are going to create a web server. The Web Server
 			# will accept connections on the port/interface combo and return

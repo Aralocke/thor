@@ -5,39 +5,11 @@ from twisted.application import service
 from twisted.application.service import IServiceMaker
 from twisted.internet import reactor
 from twisted.plugin import IPlugin
-from twisted.python import log, usage
+from twisted.python import log
 
 from thor import app
+from thor.app.asgard.master import Options
 from thor.common.core.service import RUN_OPT_ASGARD, RUN_OPT_CRAWLER, RUN_OPT_WEB
-
-class Options(usage.Options):
-	optParameters = [
-		# Default controls. This will launch one web server configuration listening on the
-		# single ip/port combination. These settings are overriden if either transport specfic 
-		# configuartions below are used
-		['iface', 'i', '127.0.0.1', '', str],
-		['port', 'p', 21189, '', int],
-		# Configuration for the HTTPS transport method for the web server. This will override
-		# the defaults that get setup above
-		['ssl-iface', 'j', None, '', str],
-		['ssl-port', 'l', None, '', int],
-		# Control the number of processes and threads that get spawned by Asgard
-		# and its children applications
-		['processes', 'P', 4, 'Number of processes for Asgard to spawn', int],
-		['threads', 'T', 8, 'Number of threads for a crawler to spawn', int],
-		# Misc command line parameters for handling operational controls and
-		# file system locations
-		['runmode', 'R', 1, 'Runmode for the application. Usually set by the application', int],
-		['socket', 'S', 'data/thor.sock', 'File System location for unix domain socket', str],
-	]
-
-	optFlags = [
-		['debug', 'b', 'Run the server in debug mode']
-	]
-
-	def postOptions(self):
-		if self['runmode'] not in (1, 2, 3):
-			raise usage.UsageError('')
 
 class ThorServiceMaker(object):
 
@@ -60,8 +32,7 @@ class ThorServiceMaker(object):
 			raise Exception('Houston we have a problem. Cannot parse argv for tapname')
 		# We need to tag on extra options here. Particularly because we are running child
 		# processes we do not want to save our state (PID file, etc)
-		self.twistd.extend([ 'run.py', '--no_save', '--no-daemon', '--pidfile' ])
-		self.twistd.extend([ '--logfile', '/dev/null' ])
+		self.twistd.extend([ 'run.py' ])
 
 
 	def makeService(self, options): 
@@ -82,15 +53,12 @@ class ThorServiceMaker(object):
 		# a built in web server for handling the web UI components
 		if options['runmode'] == RUN_OPT_ASGARD:
 			application = app.Asgard( twistdOpts=self.twistd, **kwargs )
-		# The second runmode is for launching Crawler processes that manage the workload
-		# like worker bees. by themselves they are their own reactor and application
-		# but react in different ways than a master application
-		elif options['runmode'] == RUN_OPT_CRAWLER:
-			application = app.Crawler( **kwargs )
 		# The third runmode is to run a Web Server only and none of the worker components. This
 		# would connect to a master server and act as a control panel for the nodes
 		elif options['runmode'] == RUN_OPT_WEB:
 			application = app.Asgard( webServerOnly=True, **kwargs )
+		else:
+			raise Exception('Unknown runmode')
 		# Set the service parent of our application to be Thor
 		# This will allow us to build out and use the API's provided by the built-in twistd 
 		# application framework

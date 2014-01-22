@@ -104,6 +104,17 @@ class MultiService(component.Service, service.MultiService):
 		# running and afterwards returns a None object
 		return None
 
+class ConnectionService(Service):
+
+	factory = None
+
+	def __init__(self, **kwargs):
+		# Call the parent init function
+		Service.__init__(self, **kwargs)
+		# We manage the connection which means we need a place holder for the 
+		# client factory we will eventually be holding
+		self.factory = None
+
 class DaemonService(MultiService):
 	def __init__(self, **kwargs):
 		MultiService.__init__(self, **kwargs)

@@ -35,24 +35,6 @@ class Component(object.Object, hook.Hooked):
 	def startup(self, *args, **kwargs):
 		pass
 
-class BufferedComponent(Component):
-
-    delimeter = '\r\n'
-    bufflen = 16384
-    __buffer = ''
-
-    def clearLineBuffer(self):
-	    # Clear the buffered data
-	    _buffer, self.__buffer = self.__buffer, ''                
-	    # return the data that was in the buffer for clean up purposes
-	    return _buffer
-
-class Connection(Component):
-
-	def __init__(self):
-		# Call the parent init function
-		Component.__init__(self)	
-
 class Service(Component):
 
 	def __init__(self, **kwargs):
@@ -83,4 +65,4 @@ class Service(Component):
 		# Some kind of world ending error just happened here. If the logs appear 
 		# useful, please tell somebody who knows what they are doign with this
 		# application
-		pass	
+		pass		

@@ -4,7 +4,19 @@ import signal
 import sys
 
 from thor import application
+from thor.app.crawler import slave
+from thor.common.core.service import RUN_OPT_CRAWLER
 
+# This whole implementation is hacky for a few reasons;
+# 1) twistd provides a great API for building daemons but not so much spawning
+#    of permenant child processes. This means we have a hack between launching
+#    and running the application. 
+# 2) Handling of processes on twistd isn't wonderful but it makes it easier.
+# 3) twistd does a LOT of basic work for us which we have to replicate inside
+#    of the actual application 
+# 
+# This whole file should be re-implemented one day.
+#
 # Setup the extended paths for the applications and includ ethe sources
 # directory within our application namespace
 absolute_path = os.path.abspath(__file__)
@@ -13,6 +25,11 @@ possible_topdir = os.path.normpath(os.path.join(absolute_path, os.pardir))
 # Add the application path if it exists on to the main system path
 if os.path.exists(os.path.join(possible_topdir, 'thor', '__init__.py')):
     sys.path.insert(0, possible_topdir)
+
+def __logAndShutdown():
+    #
+    # TODO Log message - Application completed
+    sys.exit(1)
 
 def execute(argv, options):
     args = [ sys.argv[0] ]
@@ -23,18 +40,21 @@ def execute(argv, options):
         args.extend(options)
     sys.argv = args 
 
-    # Debugging purposes only to track the final argument list passed to the
-    # twistd application
-    #
     # TODO Debug log message of application arguments
-    from twisted.scripts.twistd import run
-
-    run() 
+    from twisted.scripts.twistd import run; run() 
     # End of application execution. The main thread will exit after the reactor dies
     # in the execute method we will fall through to this point
-    #
-    # TODO Log message - Application completed
-    sys.exit(1)  
+    __logAndShutdown() 
+
+def launch(argv, options):
+    print 'Crawler process launched'
+    slave.launcher(options)
+    # Once the reactor runs we will continue to run and not return until the application
+    # has exits and we trigger logAndSHutdown
+    from twisted.internet import reactor; reactor.run()
+    # End of application execution. The main thread will exit after the reactor dies
+    # in the execute method we will fall through to this point
+    __logAndShutdown()
 
 # Determine reactor type. Most *UNIX systems will use a poll based reactor
 # while older systems will still user the select type
@@ -84,6 +104,10 @@ parser.add_option('-P', '--pidfile',
     help='Path to store PID file', 
     dest='pidfile', default=None)
 
+parser.add_option('-R', '--runmode', 
+    help='Runmode for the application. Usually set by the application', 
+    dest='runmode', type='int', default=1)
+
 # The args from 1- are all of the program arguments. The first arg (0th) is the
 # program executable and thus useless to us in parsing
 sargs = sys.argv[1:]
@@ -102,26 +126,32 @@ for option in ('logfile', 'pidfile'):
     if hasattr(options, option):
         twistd.extend(['--'+option, getattr(options, option)])
 
-if not hasattr(args, 'runmode'):
-    if not options.pidfile:
-        twistd.extend(['--pidfile', 'data/thor.pid'])
-    if not options.logfile:
-        twistd.extend(['--logfile', 'data/thor.log'])
+if not options.pidfile:
+    twistd.extend(['--pidfile', 'data/thor.pid'])
+if not options.logfile:
+    twistd.extend(['--logfile', 'data/thor.log'])
 
 if not options.daemonise:
     twistd.append('-n')
-
 if options.debug:
     opts.append('-b') 
 
 # We have to extend the application arguments because we want the twistd option parser
-# to be able to  parse everything. We are extending the list LAST in case we want to pass
+# to be able to parse everything. We are extending the list LAST in case we want to pass
 # arguments (like DEBUG) to the actuall application
 opts.extend(args)
 
 # Execute the application. All application initialization logic has been cleared, 
 # arguments parsed, and application initialized. From here on out we're in the
 # hands of Thor mission control.
-execute(twistd, opts)
-
+if hasattr(options, 'runmode'):
+    # Make sure that we pass the runmode parameter to the thor_plugin option
+    opts.extend(['--runmode', getattr(options, 'runmode', 1)])
+    # Prepare to launch. If we're runmode is for a crawler. It won't be as impressive
+    # but we take off anyhow
+    if options.runmode == RUN_OPT_CRAWLER:
+        launch(opts, options)
+    # You know that red button? Push the red button!
+    else:
+        execute(twistd, opts)
 # EOF :: ./run.py
