@@ -121,11 +121,6 @@ class Crawler(DaemonService):
 		for i in range(self.threads):
 			spider = self.create_spider()
 
-		kwargs = {'target': 'http://phantomnet.net/', 'interval': 1, 'length': 10}
-		reactor.callLater(5, self.addTarget, **kwargs)
-		
-
-
 def launcher(options):
 	socket = None
 	# The config object is defined above with the parameters that we expect. These options
