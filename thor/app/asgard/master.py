@@ -80,6 +80,10 @@ class Asgard(service.DaemonService):
 			port=kwargs.get('ssl-port', self.port['https']))
 
 	def create_node(self, threads=None, socket=None, **options):
+		# A few notes here for TODO's or later stuff
+		# * Check permissions on the socket. Particularly if we respawn a node
+		#   and we can't read or access the socket .. that might be interesting 
+		#
 		# An array holding the arguments to send to the remote process
 		# the first is the run.py command which will execute the node
 		cmd = [ sys.executable ]
@@ -180,14 +184,30 @@ class Asgard(service.DaemonService):
 	def removeNode(self, node):
 		if node.getUID() not in self.nodes:
 			raise KeyError('Node not registered')
+		# It's importnat we remove the key here before firing incae any listeners
+		# are looking for accurate node counts
 		del self.nodes[node.getUID()]
+		# Firing this event is to alert listeners that we have lost a node. The process 
+		# of respawning nodes happens AFTER we alert everyone to the loss
 		self.fire('node.remove')
+		# After the alert goes out we can trigger a check to respawn nodes
+		if self.getState('RUNNING'):
+			# We're still running and we lost a node. By default we should ALWAYS have at 
+			# least one spare node available and running idly in the background. We can
+			# always spawn more to scale with the application
+			if len(self.nodes) < self.processes:
+				# Create a new node automatically 
+				self.create_node(threads=self.threads, socket=self.socket)
+		# When our state is NOT RUNNING - we're probably shutting down, which means
+		# that nothing else needs to happen here
+
 
 	def removeServer(self, server):
 		if server.getUID() not in self.servers:
 			raise KeyError('Server not registered')
 		del self.servers[server.getUID()]
 		self.fire('server.remove')
+		# TODO Handle the loss of a WebServer or the local UNIX Server
 
 	def setWebInterface(self, transport='http', iface=None, port=None):
 		# Only two web transport types. Maybe down the road we can implement
@@ -208,16 +228,14 @@ class Asgard(service.DaemonService):
 				self.fire('web.interface.change')
 
 	def shutdown(self):
-		print 'Asgard shutdown hook'
+		log.msg('Asgard shutdown process initiated')
 
 	def startup(self):
-		print 'Asgard startup hook'
 		try:
-			log.msg('Spawning local socket: %s' % self.socket)
 			u_server = self.create_server(socket=self.socket)
 			w_server = self.create_server(docroot='web')
 
-			#for i in range(self.processes):
-			node = self.create_node(threads=self.threads, socket=self.socket, debug=True)
+			for i in range(self.processes):
+				self.create_node(threads=self.threads, socket=self.socket, debug=True)
 		except:
 			log.err()

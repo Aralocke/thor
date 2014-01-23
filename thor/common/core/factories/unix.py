@@ -6,6 +6,7 @@ class UNIXClientFactory(factory.ClientFactory):
         factory.ClientFactory.__init__(self, parent, protocol)
 
     def startedConnecting(self, connector):
+    	factory.ClientFactory.startedConnecting(self)
     	print 'UNIXConnection is attempting to connect to socket'
 
 	def clientConnectionFailed(self, connector, reason):
@@ -13,6 +14,7 @@ class UNIXClientFactory(factory.ClientFactory):
 		print 'Reason: %s' % reason
 
 	def clientConnectionLost(self, connector, reason):
+		factory.ClientFactory.clientConnectionLost(self, connector, reason)
 		print 'UNIXConnection has lost connection to socket'
 		print 'Reason: %s' % reason
 

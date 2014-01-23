@@ -114,6 +114,31 @@ class ConnectionService(Service):
 		# We manage the connection which means we need a place holder for the 
 		# client factory we will eventually be holding
 		self.factory = None
+		# We record and fire on a number of events. This allows for extending classes
+		# to know when events happen by overloading certain functions
+		self.addHook('connecting', self.connecting)
+		self.addHook('connected', self.connected)
+		self.addHook('disconnected', self.disconnected)
+
+	def connected(self):
+		# It's important to note that this event means something different depending on
+		# the type of service it represents. If a server is using this method, than the 
+		# 'connected' event fires whenever a conenction is established from an incomming
+		# source. For a Connection going out, this event will fire when it has connected
+		# to a server
+		pass
+
+	def connecting(self):
+		# It's important to note that this event means something different depending on
+		# the type of service it represents. For a connection this will fire whenever
+		# it has begun connecting to the target server
+		pass
+
+	def disconnected(self):
+		# It's important to note that this event means something different depending on
+		# the type of service it represents. For a server this event will fire whenever
+		# a connection has completely disconnected.
+		pass
 
 class DaemonService(MultiService):
 	def __init__(self, **kwargs):

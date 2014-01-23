@@ -15,6 +15,10 @@ class ClientFactory(object.Object, protocol.ClientFactory):
 		# server and the crawlers
 		self.protocol = protocol
 
+	def startedConnecting(self):
+		# Fire the hook displaying us as connecting to the Asgard service
+		self.parent.fire('connecting')
+
 class ServerClientFactory(object.Object, protocol.ServerFactory):
 
 	parent = None
@@ -28,3 +32,18 @@ class ServerClientFactory(object.Object, protocol.ServerFactory):
 		# single protocol to understand communications between the Asgard
 		# server and the crawlers
 		self.protocol = protocol
+		# We maintain a list of the connections we produce stored by their
+		# object UID
+		self.clients = {}
+
+	def buildProtocol(self, addr):
+		# Create teh client and pass it a reference to ourselves
+		# the factory
+		client = self.protocol()
+		client.factory = self
+		# We need to do book keeping on the client and keep track of
+		# the connections we produce
+		self.clients[client.getUID()] = client
+		# AFter we do some basic book keeping we return the protocol object and 
+		# and continue on our way
+		return client

@@ -57,7 +57,6 @@ class Crawler(DaemonService):
 		return connection
 
 	def startup(self):
-		print 'Crawler startup hook'
 		# We need to establish our connection to the primary asgard server and initialize
 		# the main socket routines
 		self.connection = self.create_connection(path=self.socket)

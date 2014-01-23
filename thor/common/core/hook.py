@@ -21,7 +21,6 @@ class Hooked(object):
 		return (eventType, triggerID)
 
 	def fire(self, eventType, consumeErrors=True):
-		print 'FIRING EVENT [%s]' % (eventType)
 		trigger = self.__hooks.get(eventType)
 		# We retrieve a list of the available hooks by key. If none exist we're goinng
 		# to ignor ethe rest of the call sequence and go back to processing

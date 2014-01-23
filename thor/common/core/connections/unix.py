@@ -1,4 +1,5 @@
 from twisted.internet import reactor
+from twisted.python import log
 from thor.common.core import service
 from thor.common.core.factories import unix
 
@@ -22,12 +23,8 @@ class UNIXConnection(service.ConnectionService):
 		self.checkPID = True
 
 	def startup(self):
-		print 'initiating UNIXConnection'
-		# Fire the hook displaying us as connecting to teh Asgard service
-		self.fire('connecting')
 		# Call the reactor to initialize the connection ...
 		# ENERGIZING
-		print 'Opening socket to: %s' % self.path
+		log.msg('UNIXConnection connecting to socket on %s' % self.path)
 		self.connection = reactor.connectUNIX(address=self.path,
 			factory=self.factory)
-		print 'Energized!'

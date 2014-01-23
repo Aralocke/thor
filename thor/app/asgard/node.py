@@ -2,7 +2,7 @@ import os
 
 from twisted.application import internet
 from twisted.internet import defer, process, protocol, reactor
-from twisted.python import runtime
+from twisted.python import log, runtime
 
 from thor.common.core import component, connection, service
 
@@ -48,9 +48,16 @@ class ProcessManager(component.Component, connection.BufferedConnection,
         status, signal, exitCode = reason.value.status, reason.value.signal, reason.value.exitCode
 
         if exitCode is None:
-            print "[%d] processExited - signal %s" % (self.pid, signal)
+            log.msg('Crawler process [%d] exited - signal %s' % 
+                (self.pid, signal))
         else:
-            print "[%d] processExited - code %s" % (self.pid, exitCode)
+            log.msg('Crawler process [%d] exited - code %s' % 
+                (self.pid, exitCode))
+
+        # By this point the process has exited and is no longer running. In most cases this
+        # happened during a shutdown. However we need to shutdown the node which will in turn
+        # alert asgard to a shutdown process
+        self.parent.stopService()
 
 class Node(service.Service):
 
@@ -77,23 +84,18 @@ class Node(service.Service):
         self.owner = owner or os.getuid()
         self.group = group or os.getgid()
 
-    def getArgs(self):
-        cmd = []
-        for i in range(len(self.args)):
-            if self.args[i] is None:
-                continue
-            if isinstance(self.args[i], list):
-                cmd.append(' '.join([str(x) for x in self.args[i]])) 
-            else: 
-                cmd.append(self.args[i])
-        return cmd
-
     def shutdown(self):
-        print '-> Node shutdownHook'
-        self.signalProcess(2)
+        # few things need to happen here.
+        # 1) Given an actual shutdown of the node we only proceed if the node is running
+        # We should not trigger a signaled shutdown if the process has shutdown already
+        if self.manager.getState('RUNNING'):
+            self.signalProcess(2)        
+        # 2) We're not running or a premature shutdown happened, faulty process
+        # rehash, whatever, for some reaosn the application is still running
+        # and we are not
+
 
     def signalProcess(self, signal='INT'):
-        print '-> signalProcess :: %s [%s] -> %s' % (signal, type(signal), self.getUID())
         if self.pid is not None:
             if isinstance(signal, str):
                 if signal not in ('INT', 'KILL', 'TERM'):
@@ -117,7 +119,9 @@ class Node(service.Service):
 
     def startup(self):            
         self.manager.setState('SPAWNING')
-        print 'Executing [%s, %s]: %s' % (self.owner, self.group, self.args)
+
+        log.msg('Initializing Crawler application [%s, %s]: %s' % 
+            (self.owner, self.group, self.args))
 
         self.process = self.__spawnProcess(
             self.manager, self.args[0], self.args,
