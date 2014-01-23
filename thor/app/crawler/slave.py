@@ -3,6 +3,8 @@ from twisted.application import service
 from twisted.python import usage
 
 from thor.app.realm import protocol
+from thor.app.crawler import task as schedule
+from thor.app.crawler import spider as crawler
 from thor.common.core.connections import unix  
 # Stupid naming conventions on my part .. maybe
 from thor.common.core.service import DaemonService
@@ -30,6 +32,7 @@ class Crawler(DaemonService):
 		# later on
 		DaemonService.__init__(self, **kwargs)
 		DaemonService.setName(self, 'Crawler')
+		self.threads = 8
 		# The socket we need to connect to holds our connection to the primary
 		# Asgard process running on this machine
 		self.socket = socket
@@ -37,6 +40,28 @@ class Crawler(DaemonService):
 		self.spiders = {}
 		# We maintain a link to the primary Asgard socket 
 		self.connection = None
+		# List of targets to crawl
+		self.targets = []
+
+	def addTarget(self, target, interval=5, **kwargs):
+		target = target
+		length = kwargs.get('length', 1)
+		interval = interval
+		startNow = kwargs.get('startNow', True)
+
+		task = schedule.Task(target, length, interval)
+		task.setCrawler(self)
+
+		print 'Adding new target [%s] at a %s second interval (test will last %d minutes)' % (
+			target, interval, length)
+
+		self.targets.append(task)
+
+		if startNow:
+			task.start(True)
+		else:
+			reactor.callLater(int(startNow), task.start)
+
 
 	def create_connection(self, path=None):
 		# We need to be given a path to the UNIX socket we are connecting to
@@ -56,10 +81,50 @@ class Crawler(DaemonService):
 		# what we return is just the started connection and "should" be ready to go
 		return connection
 
+	def create_spider(self):		
+		spider = crawler.Spider()
+
+		spider.addHook('startup', self.registerSpider, spider)
+		spider.addHook('shutdown', self.removeSpider, spider)
+
+		spider.setServiceParent(self)
+
+		return spider
+
+	def executeTask(self, task):
+		for uid, spider in self.spiders.items():
+			d = spider.execute(task.target)
+			d.addCallbacks(task.report, task.failed)
+
+	def registerSpider(self, spider):
+		if spider.getUID() in self.spiders:
+			raise KeyError('spider already exists')
+		self.spiders[spider.getUID()] = spider
+		self.fire('spider.register')
+
+	def removeSpider(self, spider):
+		if spider.getUID() not in self.spiders:
+			raise KeyError('spider not registered')
+		del self.spiders[spider.getUID()]
+		self.fire('spider.remove')
+		if self.getState('RUNNING'):
+			if len(self.spiders) < self.threads:
+				self.create_spider()
+
 	def startup(self):
 		# We need to establish our connection to the primary asgard server and initialize
 		# the main socket routines
 		self.connection = self.create_connection(path=self.socket)
+		# Once we establish our connection to the Asgard process, we are goign to initiate
+		# the calls to spawn our spiders. Each Spider represents 1 distinct functional crawler
+		# of the http target
+		for i in range(self.threads):
+			spider = self.create_spider()
+
+		kwargs = {'target': 'http://phantomnet.net/', 'interval': 1, 'length': 10}
+		reactor.callLater(5, self.addTarget, **kwargs)
+		
+
 
 def launcher(options):
 	socket = None

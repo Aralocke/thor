@@ -201,7 +201,6 @@ class Asgard(service.DaemonService):
 		# When our state is NOT RUNNING - we're probably shutting down, which means
 		# that nothing else needs to happen here
 
-
 	def removeServer(self, server):
 		if server.getUID() not in self.servers:
 			raise KeyError('Server not registered')

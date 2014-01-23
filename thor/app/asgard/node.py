@@ -35,9 +35,6 @@ class ProcessManager(component.Component, connection.BufferedConnection,
     def errReceived(self, data):
         print '> errReceived -> %s' % data
 
-    def inReceived(self, data):
-        print '> inReceived -> %s' % data
-
     def outReceived(self, data):
         print '> outReceived -> %s' % data
 
