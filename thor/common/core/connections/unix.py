@@ -25,6 +25,6 @@ class UNIXConnection(service.ConnectionService):
 	def startup(self):
 		# Call the reactor to initialize the connection ...
 		# ENERGIZING
-		log.msg('UNIXConnection connecting to socket on %s' % self.path)
+		#log.msg('UNIXConnection connecting to socket on %s' % self.path)
 		self.connection = reactor.connectUNIX(address=self.path,
 			factory=self.factory)

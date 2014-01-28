@@ -3,12 +3,15 @@ from twisted.application import service
 from twisted.python import usage
 
 from thor.app.realm import protocol
+from thor.app.crawler import metrics
 from thor.app.crawler import task as schedule
 from thor.app.crawler import spider as crawler
+from thor.app.crawler.task import NoParentException
 from thor.common.core.connections import unix  
 # Stupid naming conventions on my part .. maybe
 from thor.common.core.service import DaemonService
 from thor.common.core.service import RUN_OPT_CRAWLER
+
 
 class Options(usage.Options):
 	optParameters = [
@@ -43,10 +46,15 @@ class Crawler(DaemonService):
 		# List of targets to crawl
 		self.targets = []
 
+	@metrics.metric('addTarget')
 	def addTarget(self, target, interval=5, **kwargs):
 		target = target
-		length = kwargs.get('length', 1)
+
+		# Length is in muniutes
+		length = int(kwargs.get('length', 1)) * 60
+		# Interval is automatically in minutes
 		interval = interval
+
 		startNow = kwargs.get('startNow', True)
 
 		task = schedule.Task(target, length, interval)
@@ -60,8 +68,7 @@ class Crawler(DaemonService):
 		if startNow:
 			task.start(True)
 		else:
-			reactor.callLater(int(startNow), task.start)
-
+			reactor.callLater(int(interval), task.start)
 
 	def create_connection(self, path=None):
 		# We need to be given a path to the UNIX socket we are connecting to
@@ -81,6 +88,7 @@ class Crawler(DaemonService):
 		# what we return is just the started connection and "should" be ready to go
 		return connection
 
+	@metrics.metric('create_spider')
 	def create_spider(self):		
 		spider = crawler.Spider()
 
@@ -91,10 +99,16 @@ class Crawler(DaemonService):
 
 		return spider
 
+	@metrics.metric('executeTask')
 	def executeTask(self, task):
 		for uid, spider in self.spiders.items():
-			d = spider.execute(task.target)
-			d.addCallbacks(task.report, task.failed)
+			try:
+				t = spider.execute(task.target)
+			except NoParentException:
+				task.setCrawler(self)
+			finally:
+				t = spider.execute(task.target)
+				t.addCallbacks(task.report, task.failed)
 
 	def registerSpider(self, spider):
 		if spider.getUID() in self.spiders:
@@ -120,6 +134,9 @@ class Crawler(DaemonService):
 		# of the http target
 		for i in range(self.threads):
 			spider = self.create_spider()
+
+		kwargs = {'target': 'http://pathways.sait.internal/login', 'interval': 0, 'length': 1}
+		reactor.callLater(5, self.addTarget, **kwargs)
 
 def launcher(options):
 	socket = None
