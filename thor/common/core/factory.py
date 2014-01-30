@@ -37,7 +37,7 @@ class ServerClientFactory(object.Object, protocol.ServerFactory):
 		self.clients = {}
 
 	def buildProtocol(self, addr):
-		# Create teh client and pass it a reference to ourselves
+		# Create the client and pass it a reference to ourselves
 		# the factory
 		client = self.protocol()
 		client.factory = self

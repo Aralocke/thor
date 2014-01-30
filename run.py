@@ -3,10 +3,6 @@ import logging
 import signal
 import sys
 
-from thor import application
-from thor.app.crawler import slave
-from thor.common.core.service import RUN_OPT_CRAWLER
-
 # This whole implementation is hacky for a few reasons;
 # 1) twistd provides a great API for building daemons but not so much spawning
 #    of permenant child processes. This means we have a hack between launching
@@ -25,6 +21,10 @@ possible_topdir = os.path.normpath(os.path.join(absolute_path, os.pardir))
 # Add the application path if it exists on to the main system path
 if os.path.exists(os.path.join(possible_topdir, 'thor', '__init__.py')):
     sys.path.insert(0, possible_topdir)
+
+from thor import application
+from thor.app.crawler import slave
+from thor.common.core.service import RUN_OPT_CRAWLER
 
 def __logAndShutdown():
     #

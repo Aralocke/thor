@@ -35,7 +35,7 @@ class Crawler(DaemonService):
 		# later on
 		DaemonService.__init__(self, **kwargs)
 		DaemonService.setName(self, 'Crawler')
-		self.threads = 8
+		self.threads = kwargs.get('threads', 8)
 		# The socket we need to connect to holds our connection to the primary
 		# Asgard process running on this machine
 		self.socket = socket
@@ -43,8 +43,10 @@ class Crawler(DaemonService):
 		self.spiders = {}
 		# We maintain a link to the primary Asgard socket 
 		self.connection = None
-		# List of targets to crawl
-		self.targets = []
+		# Referenc to the scheduler that controls the requests per minute going out
+		self.scheduler = schedule.Scheduler()
+		self.scheduler.setCrawler(self)
+		self.scheduler.threshold = kwargs.get('threshold', 60)
 
 	@metrics.metric('addTarget')
 	def addTarget(self, target, interval=5, **kwargs):
@@ -61,14 +63,9 @@ class Crawler(DaemonService):
 		task.setCrawler(self)
 
 		print 'Adding new target [%s] at a %s second interval (test will last %d minutes)' % (
-			target, interval, length)
+			target, interval, int(length / 60))
 
-		self.targets.append(task)
-
-		if startNow:
-			task.start(True)
-		else:
-			reactor.callLater(int(interval), task.start)
+		self.scheduler.schedule(task)
 
 	def create_connection(self, path=None):
 		# We need to be given a path to the UNIX socket we are connecting to
@@ -99,17 +96,6 @@ class Crawler(DaemonService):
 
 		return spider
 
-	@metrics.metric('executeTask')
-	def executeTask(self, task):
-		for uid, spider in self.spiders.items():
-			try:
-				t = spider.execute(task.target)
-			except NoParentException:
-				task.setCrawler(self)
-			finally:
-				t = spider.execute(task.target)
-				t.addCallbacks(task.report, task.failed)
-
 	def registerSpider(self, spider):
 		if spider.getUID() in self.spiders:
 			raise KeyError('spider already exists')
@@ -134,7 +120,10 @@ class Crawler(DaemonService):
 		# of the http target
 		for i in range(self.threads):
 			spider = self.create_spider()
+		# setup the scheduler 
+		self.scheduler.start()
 
+		# Internal targeting
 		kwargs = {'target': 'http://pathways.sait.internal/login', 'interval': 0, 'length': 1}
 		reactor.callLater(5, self.addTarget, **kwargs)
 
