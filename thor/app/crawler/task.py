@@ -151,26 +151,27 @@ class Scheduler(task.LoopingCall):
 					# we have available requests and if we do, we need to queue them up 
 					# within the threadpool
 					# ====
-					# We do NOT want to block. This might be limited to CPython so I can
-					# imagine a bug turning up in this location eventually. Adding a 
-					# call with blocking=False 'should' return false immediately given the
-					# program's inability to acquire a semaphore lock
-					if task.semaphore.available():
-						# Acquire a semaphore lock
-						task.semaphore.acquire()
-						# We calculate how many requests per second by dividing the value 
-						# of requests per minute by 60. The value returned is a float
-						requests_per_second = float(task.rpm) / 60
-						print '[%s] RPS=%s Semaphores=%d' % (task.target, requests_per_second,
-							task.semaphore.getAvailable())
-						# Our minimum is to allow ONE request per iteration. SO the lowest
-						# RPM we can do is 60. This is to make entering the loop worth
-						# the time expended to get to this logical point
-						if int(requests_per_second) < 1:
-							requests_per_second = 1
-						# After we have our requests per second, we'll loop until we get a
-						# new connection count equal to our RPS
-						for count in range(int(requests_per_second)):
+					# We calculate how many requests per second by dividing the value 
+					# of requests per minute by 60. The value returned is a float
+					requests_per_second = float(task.rpm) / 60
+					print '[%s] RPS=%s Semaphores=%d' % (task.target, requests_per_second,
+						task.semaphore.getAvailable())
+					# Our minimum is to allow ONE request per iteration. SO the lowest
+					# RPM we can do is 60. This is to make entering the loop worth
+					# the time expended to get to this logical point
+					if int(requests_per_second) < 1:
+						requests_per_second = 1
+
+					# After we have our requests per second, we'll loop until we get a
+					# new connection count equal to our RPS
+					for count in range(int(requests_per_second)):
+						# We do NOT want to block. This might be limited to CPython so I can
+						# imagine a bug turning up in this location eventually. Adding a 
+						# call with blocking=False 'should' return false immediately given the
+						# program's inability to acquire a semaphore lock
+						if task.semaphore.available():
+							# Acquire a semaphore lock
+							task.semaphore.acquire()
 							print 'Creating spider'
 							# The call to create the spider will chain its returned callback
 							# to the release of its internal semaphore. Once we pass off 
