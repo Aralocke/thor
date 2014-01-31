@@ -1,21 +1,36 @@
 from twisted.internet import task, reactor
-from thor.app.crawler import metrics
+from thor.app.crawler import metrics, spider
+from thor.common import thread
+from thor.common.core import component
 
 class NoParentException(Exception):
 	pass
 
-class Task(object):
+class Task(component.Component):
 
 	parent = None
 
-	def __init__(self, target,  length, interval):
+	def __init__(self, target,  length, interval, rpm=200, startNow=True):
+		component.Component.__init__(self)
+
 		self.target = target
 		self.interval = interval
 		self.clock = reactor
 		self.length = length
 
-		self.rpm = 200
+		if type(startNow) == 'int':
+			self.starttime = self.clock.seconds() + int(startNow)
+		else:
+			self.starttime = 0
+
+		self.rpm = rpm
 		self.requests = 0
+
+		self.semaphore = thread.AvailabilitySemaphore(value=self.rpm)
+
+	def complete(self):
+		print 'Completing task'
+		self.setState('STOPPED')
 
 	def completed(self, passThrough=None):
 
@@ -26,20 +41,13 @@ class Task(object):
 		print 'Task for target [%s] completed after %d requests. Task took %s seconds to complete' % (
 			self.target, self.requests, time)
 
-	@metrics.metric('execute_task')
-	def execute(self):
-		try:
-			# Houston, we have a problem
-			if self.parent is None:
-				raise NoParentException('Parent has not bee set on a task')
-			# This must be a thread safe operation becuase there are no locks within 
-			# the primary crawler application. by using the reactor's main thread to 
-			# initialize the requests everything stays thread safe and asynchronous
-			reactor.callFromThread(self.parent.executeTask, self)
-		finally:
-			# This will handle our shutdown and time detection routines
-			if self.isActive():
-				self.stop()
+	def createSpider(self):
+		# We create the spider and set its target to the task's target
+		s = spider.Spider(target=self.target)
+		# Save a reference to our task
+		s.setTask(self)
+
+		return s
 
 	def failed(self, failure=None):
 		if failure is not None:
@@ -61,7 +69,36 @@ class Task(object):
 		return ((self.length + self.starttime) - self.clock.seconds())
 
 	def isActive(self):
-		return (self.clock.seconds() - self.starttime) > self.length
+		if self.getState('RUNNING'):
+			print 'remaining=%d' % self.getTimeRemaining()
+			if self.getTimeRemaining() > 0:
+				return True
+		return False
+
+	def readyToStart(self):
+		# The task should remain in the 'new' state until the reactor's scheduler starts 
+		# it during its main loop
+		if self.getState('NEW'):
+			# Allows us to schedule start times based on when they are tasked to begin
+			# we only proceed to start the test AFTER the start time has been passed
+			#
+			# assuming no staggered start options, starttime will actually be the value
+			# zero and not a timestamp
+			if self.clock.seconds() >= self.starttime:
+				return True
+		# If we're already called start this function is meaningless
+		return False
+
+	def start(self):
+		# CHange the state of the task
+		self.setState('STARTING')
+		# Setup the instance variables we need to track time
+		self.starttime = self.clock.seconds()
+		# Setup the runtime monitors
+		self.requests = 0
+		self.runtime = []
+		# Finally we set the task to its active state
+		self.setState('RUNNING')
 
 	def report(self, passThrough=None):
 		return passThrough
@@ -82,6 +119,8 @@ class Scheduler(task.LoopingCall):
 		self.tasks = []
 		# We track the amount time 1 minute of execution loops take to complete
 		self.runtime = []
+		# Number of tasks reaped in an interval threshold
+		self.reaped = 0
 
 	def execute(self):
 		__start = self.clock.seconds()
@@ -92,12 +131,76 @@ class Scheduler(task.LoopingCall):
 		# ====
 		# If we have tasks we proceed, otherwise we get out and come back in one second
 		if self.tasks: 
-			pass
 			# ====
 			# start scheduler logic block
 			# ====
-			#from time import sleep
-			#sleep(0.5)
+			self.completed_tasks = []
+			# Loop through the existing tasks
+			for task in self.tasks:
+				# Loop through each listed tasks running a few checks on them before
+				# we attempt to queue them out.
+				#
+				# If the task need sto be started we start it here
+				if task.readyToStart():
+					task.start()
+				# Now we check if the task is still active
+				if task.isActive():
+					print 'Task [%s] is active' % task.target
+					# ====
+					# The bulk of the scheduling logic happens here. We want to know if
+					# we have available requests and if we do, we need to queue them up 
+					# within the threadpool
+					# ====
+					# We do NOT want to block. This might be limited to CPython so I can
+					# imagine a bug turning up in this location eventually. Adding a 
+					# call with blocking=False 'should' return false immediately given the
+					# program's inability to acquire a semaphore lock
+					if task.semaphore.available():
+						# Acquire a semaphore lock
+						task.semaphore.acquire()
+						# We calculate how many requests per second by dividing the value 
+						# of requests per minute by 60. The value returned is a float
+						requests_per_second = float(task.rpm) / 60
+						print '[%s] RPS=%s Semaphores=%d' % (task.target, requests_per_second,
+							task.semaphore.getAvailable())
+						# Our minimum is to allow ONE request per iteration. SO the lowest
+						# RPM we can do is 60. This is to make entering the loop worth
+						# the time expended to get to this logical point
+						if int(requests_per_second) < 1:
+							requests_per_second = 1
+						# After we have our requests per second, we'll loop until we get a
+						# new connection count equal to our RPS
+						for count in range(int(requests_per_second)):
+							print 'Creating spider'
+							# The call to create the spider will chain its returned callback
+							# to the release of its internal semaphore. Once we pass off 
+							# to the reactor it is all handled asynchronously
+							s = task.createSpider()
+							# Pass off the spiders execute method to the reactors internal
+							# threapool and wait for execution
+							reactor.callInThread(s.execute)	
+				else:
+					task.setState('STOPPING')
+					print 'Task [%s] has completed' % task.target
+					# Add the task to the list that we will cleanup after we 
+					# finish executing
+					self.completed_tasks.append(task)
+			# Now we run through and complete any tasks and remove them from our task
+			# list for the next iteration
+			if self.completed_tasks:
+				# Cleanup and expiration of the completed tasks
+				print 'Pruning %d completed tasks' % len(self.completed_tasks)
+				for task in self.completed_tasks:
+					# Remove the task from our tracker so that we don't accidentally
+					# process it again. After this point we longer care what happens to
+					# the task in terms of teh actual application
+					self.tasks.remove(task)
+					# Calling complete will set the state to shutdown and fire off any 
+					# remaining shutdown hooks
+					task.complete()
+				# Clean up the list and rest it
+				self.reaped += len(self.completed_tasks)
+				self.completed_tasks = []
 			# ====
 			# End scheduler logic block
 			# ====
@@ -132,8 +235,10 @@ class Scheduler(task.LoopingCall):
 			print '\tOverflow time: %s' % round(overflow_time, 5)
 			print '\tFree time: %s (%s unused)' % (round(free_time, 5), 
 				round(free_percentage, 2))
+			print '\tReaped tasks: %d' % self.reaped
 			# Reset the runtime container
 			runtime, self.runtime = self.runtime, []
+			reaped, self.reaped = self.reaped, 0
 
 	def schedule(self, task):
 		self.tasks.append(task)
@@ -146,7 +251,12 @@ class Scheduler(task.LoopingCall):
 		# of the looping call so any callbacks will be triggered here
 		task.LoopingCall.stop(self)
 
-	def start(self):
+	def start(self, threads=8):		
+		# Grab the threadpool instance and override some settings with what we need
+		threadpool = reactor.getThreadPool()
+		# We set the internal reactor's thread pool to be the number of spiders we wnat
+		# to run
+		threadpool.adjustPoolsize(maxthreads=threads)
 		# Start the internal looping call immeadietly and begin processign requests
 		self.__callback = task.LoopingCall.start(self, 1.0, now=True)
 

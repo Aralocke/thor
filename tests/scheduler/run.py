@@ -8,7 +8,7 @@
 targets = []
 # Each target tuple gets appended on to the set
 # ['target', rpm, interval, length (in minutes)]
-targets.append(['http://pathways.sait.internal/login', 200, 2, 2])
+targets.append(['http://pathways.sait.internal/login', 200, 2, 1])
 targets.append(['http://phantomnet.net', 50, 2, 1])
 # 
 # This test is for purely debugging purposes and will print all dat to the console
@@ -93,10 +93,10 @@ for (target, rpm, interval, length) in targets:
     kwargs = {'length': length, 'rpm': rpm, 'startNow': True}
     # Add the new target to the application
     application.addTarget(target, interval, **kwargs)
-    
+
 # Now we need to start the scheduler loop
 print 'Starting the scheduler'
-application.scheduler.start()
+application.scheduler.start(options.threads)
 
 # Activate and run the twisted reactor
 reactor.run()

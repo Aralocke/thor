@@ -46,20 +46,23 @@ class Crawler(DaemonService):
 		# Referenc to the scheduler that controls the requests per minute going out
 		self.scheduler = schedule.Scheduler()
 		self.scheduler.setCrawler(self)
-		self.scheduler.threshold = kwargs.get('threshold', 60)
+		self.scheduler.threshold = kwargs.get('threshold',)
 
 	@metrics.metric('addTarget')
 	def addTarget(self, target, interval=5, **kwargs):
 		target = target
 
+		rpm = int(kwargs.get('rpm', 60))
+
 		# Length is in muniutes
 		length = int(kwargs.get('length', 1)) * 60
+
 		# Interval is automatically in minutes
 		interval = interval
 
 		startNow = kwargs.get('startNow', True)
 
-		task = schedule.Task(target, length, interval)
+		task = schedule.Task(target, length, interval, startNow=startNow)
 		task.setCrawler(self)
 
 		print 'Adding new target [%s] at a %s second interval (test will last %d minutes)' % (
@@ -85,32 +88,6 @@ class Crawler(DaemonService):
 		# what we return is just the started connection and "should" be ready to go
 		return connection
 
-	@metrics.metric('create_spider')
-	def create_spider(self):		
-		spider = crawler.Spider()
-
-		spider.addHook('startup', self.registerSpider, spider)
-		spider.addHook('shutdown', self.removeSpider, spider)
-
-		spider.setServiceParent(self)
-
-		return spider
-
-	def registerSpider(self, spider):
-		if spider.getUID() in self.spiders:
-			raise KeyError('spider already exists')
-		self.spiders[spider.getUID()] = spider
-		self.fire('spider.register')
-
-	def removeSpider(self, spider):
-		if spider.getUID() not in self.spiders:
-			raise KeyError('spider not registered')
-		del self.spiders[spider.getUID()]
-		self.fire('spider.remove')
-		if self.getState('RUNNING'):
-			if len(self.spiders) < self.threads:
-				self.create_spider()
-
 	def startup(self):
 		# We need to establish our connection to the primary asgard server and initialize
 		# the main socket routines
@@ -121,7 +98,7 @@ class Crawler(DaemonService):
 		for i in range(self.threads):
 			spider = self.create_spider()
 		# setup the scheduler 
-		self.scheduler.start()
+		self.scheduler.start(self.threads)
 
 		# Internal targeting
 		kwargs = {'target': 'http://pathways.sait.internal/login', 'interval': 0, 'length': 1}
