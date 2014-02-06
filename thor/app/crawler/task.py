@@ -124,6 +124,11 @@ class Scheduler(task.LoopingCall):
 		self.reaped = 0
 
 	def execute(self):
+		# We can shut ourselves down, or at least PAUSE ourselves when we have no tasks 
+		# running. We automatically return here to avoid any unnecesary process time
+		if len(self.tasks) == 0:
+			return
+
 		__start = self.clock.seconds()
 		# We have no tasks so do not proceed any further
 		print 'Executing'

@@ -8,8 +8,7 @@
 targets = []
 # Each target tuple gets appended on to the set
 # ['target', rpm, interval, length (in minutes)]
-targets.append(['http://pathways.sait.internal/login', 2000, 2, 3])
-targets.append(['http://phantomnet.net', 50, 2, 1])
+targets.append(['', 1000, 2, 3])
 # 
 # This test is for purely debugging purposes and will print all dat to the console
 # during run time
