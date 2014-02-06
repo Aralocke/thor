@@ -26,7 +26,8 @@ class Task(component.Component):
 		self.rpm = rpm
 		self.requests = 0
 
-		self.semaphore = thread.AvailabilitySemaphore(value=self.rpm)
+		#self.semaphore = thread.AvailabilitySemaphore(value=self.rpm)
+		self.semaphore = thread.TimeReleaseSemaphore(60, reactor, value=self.rpm)
 
 	def complete(self):
 		print 'Completing task'
@@ -96,7 +97,7 @@ class Task(component.Component):
 		self.starttime = self.clock.seconds()
 		# Setup the runtime monitors
 		self.requests = 0
-		self.runtime = []
+		self.runtime = []		
 		# Finally we set the task to its active state
 		self.setState('RUNNING')
 
@@ -143,9 +144,10 @@ class Scheduler(task.LoopingCall):
 				# If the task need sto be started we start it here
 				if task.readyToStart():
 					task.start()
+					# Start the availability semaphore
+					task.semaphore.start()
 				# Now we check if the task is still active
 				if task.isActive():
-					print 'Task [%s] is active' % task.target
 					# ====
 					# The bulk of the scheduling logic happens here. We want to know if
 					# we have available requests and if we do, we need to queue them up 
@@ -154,8 +156,7 @@ class Scheduler(task.LoopingCall):
 					# We calculate how many requests per second by dividing the value 
 					# of requests per minute by 60. The value returned is a float
 					requests_per_second = float(task.rpm) / 60
-					print '[%s] RPS=%s Semaphores=%d' % (task.target, requests_per_second,
-						task.semaphore.getAvailable())
+					
 					# Our minimum is to allow ONE request per iteration. SO the lowest
 					# RPM we can do is 60. This is to make entering the loop worth
 					# the time expended to get to this logical point
@@ -172,7 +173,6 @@ class Scheduler(task.LoopingCall):
 						if task.semaphore.available():
 							# Acquire a semaphore lock
 							task.semaphore.acquire()
-							print 'Creating spider'
 							# The call to create the spider will chain its returned callback
 							# to the release of its internal semaphore. Once we pass off 
 							# to the reactor it is all handled asynchronously
@@ -180,6 +180,8 @@ class Scheduler(task.LoopingCall):
 							# Pass off the spiders execute method to the reactors internal
 							# threapool and wait for execution
 							reactor.callInThread(s.execute)	
+					print '[%s] RPS=%s Semaphores=%d' % (task.target, requests_per_second,
+						task.semaphore.getAvailable())
 				else:
 					task.setState('STOPPING')
 					print 'Task [%s] has completed' % task.target

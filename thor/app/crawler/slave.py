@@ -49,24 +49,27 @@ class Crawler(DaemonService):
 		self.scheduler.threshold = kwargs.get('threshold',)
 
 	@metrics.metric('addTarget')
-	def addTarget(self, target, interval=5, **kwargs):
+	def addTarget(self, target, **kwargs):
 		target = target
 
 		rpm = int(kwargs.get('rpm', 60))
 
+		if rpm < 60: rpm = 60
+
 		# Length is in muniutes
 		length = int(kwargs.get('length', 1)) * 60
 
-		# Interval is automatically in minutes
-		interval = interval
+		# Interval is ALWAYS in seconds
+		interval = float(kwargs.get('interval', 1))
 
 		startNow = kwargs.get('startNow', True)
 
-		task = schedule.Task(target, length, interval, startNow=startNow)
+		task = schedule.Task(target, length, interval, rpm=rpm, 
+			startNow=startNow)
 		task.setCrawler(self)
 
-		print 'Adding new target [%s] at a %s second interval (test will last %d minutes)' % (
-			target, interval, int(length / 60))
+		print ('Adding new target [%s] at a %s second interval with %d requests per minute'
+		      ' (test will last %d minutes)' % (target, interval, rpm, int(length / 60)))
 
 		self.scheduler.schedule(task)
 

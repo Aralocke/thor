@@ -8,7 +8,7 @@
 targets = []
 # Each target tuple gets appended on to the set
 # ['target', rpm, interval, length (in minutes)]
-targets.append(['http://pathways.sait.internal/login', 200, 2, 1])
+targets.append(['http://pathways.sait.internal/login', 2000, 2, 3])
 targets.append(['http://phantomnet.net', 50, 2, 1])
 # 
 # This test is for purely debugging purposes and will print all dat to the console
@@ -90,9 +90,10 @@ for (target, rpm, interval, length) in targets:
 	# start crawling pages
 	#
     # Create the keyword argument list we pass to the Crawler application
-    kwargs = {'length': length, 'rpm': rpm, 'startNow': True}
+    kwargs = {'interval': interval, 'length': length, 'rpm': rpm, 
+	    'startNow': True}
     # Add the new target to the application
-    application.addTarget(target, interval, **kwargs)
+    application.addTarget(target, **kwargs)
 
 # Now we need to start the scheduler loop
 print 'Starting the scheduler'
